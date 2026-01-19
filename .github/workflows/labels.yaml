@@ -3,10 +3,15 @@ name: Sync labels
 
 # yamllint disable-line rule:truthy
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/labels.yml
   schedule:
     - cron: "34 5 * * *"
   workflow_dispatch:
 
 jobs:
   workflows:
-    uses: hassio-addons/workflows/.github/workflows/labels.yaml@main
+    uses: ./.github/workflows/labels-reusable.yaml
