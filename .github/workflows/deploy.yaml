@@ -12,6 +12,10 @@ on:
     types:
       - completed
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   workflows:
     uses: ./.github/workflows/addon-deploy.yaml

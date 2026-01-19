@@ -5,6 +5,10 @@ name: Sync labels
 on:
   workflow_call:
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   labels:
     name: ♻️ Sync labels

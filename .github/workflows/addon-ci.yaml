@@ -10,6 +10,9 @@ on:
         required: false
         type: string
 
+permissions:
+  contents: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -37,11 +40,11 @@ jobs:
         id: override
         run: |
           slug="${{ steps.information.outputs.slug }}"
-          if [[ ! -z "${{ inputs.slug }}" ]]; then
+          if [[ -n "${{ inputs.slug }}" ]]; then
             slug="${{ inputs.slug }}"
           fi
           echo "slug=$slug" >> "$GITHUB_OUTPUT"
-      - name: 🔡 Normalize registry owner
+      - name: 🔡 Normalize registry owner for GHCR
         id: registry_owner
         run: echo "registry_owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
 
@@ -154,7 +157,7 @@ jobs:
           from=$(yq --no-colors eval ".build_from.${{ matrix.architecture }}" "${{ needs.information.outputs.build }}")
           echo "from=${from}" >> "$GITHUB_OUTPUT"
 
-          if [[ "${{ matrix.architecture}}" = "amd64" ]]; then
+          if [[ "${{ matrix.architecture }}" = "amd64" ]]; then
             echo "platform=linux/amd64" >> "$GITHUB_OUTPUT"
           elif [[ "${{ matrix.architecture }}" = "i386" ]]; then
             echo "platform=linux/386" >> "$GITHUB_OUTPUT"

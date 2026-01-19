@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base", ":enableGitHubActions"],
+  "extends": ["config:base", ":enableGithubActions"],
   "rebaseWhen": "behind-base-branch",
   "dependencyDashboard": true,
   "labels": ["dependencies", "no-stale"],
@@ -9,7 +9,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["Dockerfile$", "build\\.yaml$"],
+      "managerFilePatterns": ["Dockerfile$", "build\\.(ya?ml)$"],
       "matchStringsStrategy": "any",
       "matchStrings": [
         "ARG BUILD_FROM=(?<depName>.*?):(?<currentValue>.*?)\\s+",

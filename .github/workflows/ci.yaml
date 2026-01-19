@@ -11,6 +11,9 @@ on:
       - synchronize
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   workflows:
     uses: ./.github/workflows/addon-ci.yaml

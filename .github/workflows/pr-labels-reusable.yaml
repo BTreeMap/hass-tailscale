@@ -5,6 +5,9 @@ name: PR Labels
 on:
   workflow_call:
 
+permissions:
+  pull-requests: read
+
 jobs:
   pr_labels:
     name: Verify

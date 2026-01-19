@@ -5,6 +5,10 @@ name: Release Drafter
 on:
   workflow_call:
 
+permissions:
+  contents: write
+  pull-requests: read
+
 jobs:
   update_release_draft:
     name: ✏️ Draft release
