@@ -18,6 +18,6 @@ permissions:
 
 jobs:
   workflows:
-    uses: ./.github/workflows/addon-deploy.yaml
+    uses: ./.github/workflows/upstream/addon-deploy.yaml
     secrets:
       DISPATCH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}

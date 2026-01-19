@@ -16,4 +16,4 @@ permissions:
 
 jobs:
   workflows:
-    uses: ./.github/workflows/addon-ci.yaml
+    uses: ./.github/workflows/upstream/addon-ci.yaml
