@@ -201,25 +201,25 @@ jobs:
         # yamllint disable rule:line-length
         run: |
           docker manifest create \
-            "ghcr.io/${{ needs.information.outputs.registry_owner }}/tailscale:${{ needs.information.outputs.environment }}" \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}:${{ needs.information.outputs.environment }}" \
             "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}/amd64:${{ needs.information.outputs.environment }}" \
             "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}/arm64:${{ needs.information.outputs.environment }}"
           docker manifest annotate \
-            "ghcr.io/${{ needs.information.outputs.registry_owner }}/tailscale:${{ needs.information.outputs.environment }}" \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}:${{ needs.information.outputs.environment }}" \
             "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}/arm64:${{ needs.information.outputs.environment }}" \
             --arch arm64 --os linux
           docker manifest create \
-            "ghcr.io/${{ needs.information.outputs.registry_owner }}/tailscale:${{ needs.information.outputs.version }}" \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}:${{ needs.information.outputs.version }}" \
             "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}/amd64:${{ needs.information.outputs.version }}" \
             "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}/arm64:${{ needs.information.outputs.version }}"
           docker manifest annotate \
-            "ghcr.io/${{ needs.information.outputs.registry_owner }}/tailscale:${{ needs.information.outputs.version }}" \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}:${{ needs.information.outputs.version }}" \
             "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}/arm64:${{ needs.information.outputs.version }}" \
             --arch arm64 --os linux
           docker manifest push \
-            "ghcr.io/${{ needs.information.outputs.registry_owner }}/tailscale:${{ needs.information.outputs.environment }}"
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}:${{ needs.information.outputs.environment }}"
           docker manifest push \
-            "ghcr.io/${{ needs.information.outputs.registry_owner }}/tailscale:${{ needs.information.outputs.version }}"
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}:${{ needs.information.outputs.version }}"
         # yamllint enable rule:line-length
 
   publish-edge:
