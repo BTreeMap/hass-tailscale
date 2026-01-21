@@ -130,7 +130,7 @@ jobs:
       - lint-shellcheck
       - lint-yamllint
     # yamllint disable rule:line-length
-    runs-on: ${{ contains(fromJson('["arm64"]'), matrix.architecture) && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    runs-on: ${{ contains(fromJson('["aarch64"]'), matrix.architecture) && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     # yamllint enable rule:line-length
     strategy:
       matrix:
@@ -159,7 +159,7 @@ jobs:
 
           if [[ "${{ matrix.architecture }}" = "amd64" ]]; then
             echo "platform=linux/amd64" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ matrix.architecture }}" = "arm64" ]]; then
+          elif [[ "${{ matrix.architecture }}" = "aarch64" ]]; then
             echo "platform=linux/arm64/v8" >> "$GITHUB_OUTPUT"
           else
             echo "::error ::Could not determine platform for architecture ${{ matrix.architecture }}"

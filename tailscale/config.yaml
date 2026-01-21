@@ -10,7 +10,7 @@ ingress_stream: true
 startup: services
 panel_icon: mdi:vpn
 arch:
-  - arm64
+  - aarch64
   - amd64
 init: false
 hassio_api: true

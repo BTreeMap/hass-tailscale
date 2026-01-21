@@ -4,7 +4,7 @@
 ![Project Stage][project-stage-shield]
 [![License][license-shield]](LICENSE.md)
 
-![Supports arm64 Architecture][arm64-shield]
+![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]
 
 [![Github Actions][github-actions-shield]][github-actions]
@@ -68,7 +68,7 @@ Want some more functionality to your Home Assistant instance?
 We have created multiple add-ons for Home Assistant. For a full list, check out
 our [GitHub Repository][repository].
 
-[arm64-shield]: https://img.shields.io/badge/arm64-yes-green.svg
+[aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
 [amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
 [commits-shield]: https://img.shields.io/github/commit-activity/y/BTreeMap/hass-tailscale.svg
 [commits]: https://github.com/BTreeMap/hass-tailscale/commits/main
