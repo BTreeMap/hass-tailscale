@@ -406,12 +406,14 @@ You have several options to get them answered:
 
 You could also [open an issue here][issue] GitHub.
 
-## Authors & contributors
-
-The original setup of this repository is by [Franck Nijhof][frenck].
+## Contributors
 
 For a full list of all authors and contributors,
 check [the contributor's page][contributors].
+
+## Maintainer
+
+Joe Fang <hass-tailscale@oss.joefang.org>
 
 ## License
 
@@ -438,17 +440,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 [addon-badge]: https://my.home-assistant.io/badges/supervisor_addon.svg
-[addon]: https://my.home-assistant.io/redirect/supervisor_addon/?addon=a0d7b954_tailscale&repository_url=https%3A%2F%2Fgithub.com%2Fhassio-addons%2Frepository
-[contributors]: https://github.com/hassio-addons/addon-tailscale/graphs/contributors
+[addon]: https://my.home-assistant.io/redirect/supervisor_addon/?addon=a0d7b954_tailscale&repository_url=https%3A%2F%2Fgithub.com%2FBTreeMap%2Fhass-tailscale
+[contributors]: https://github.com/BTreeMap/hass-tailscale/graphs/contributors
 [discord-ha]: https://discord.gg/c5DvZ4e
 [discord]: https://discord.me/hassioaddons
-[forum]: https://community.home-assistant.io/?u=frenck
-[frenck]: https://github.com/frenck
+[forum]: https://community.home-assistant.io/
 [headscale]: https://github.com/juanfont/headscale
 [http_integration]: https://www.home-assistant.io/integrations/http/
-[issue]: https://github.com/hassio-addons/addon-tailscale/issues
+[issue]: https://github.com/BTreeMap/hass-tailscale/issues
 [reddit]: https://reddit.com/r/homeassistant
-[releases]: https://github.com/hassio-addons/addon-tailscale/releases
+[releases]: https://github.com/BTreeMap/hass-tailscale/releases
 [semver]: https://semver.org/spec/v2.0.0.html
 [tailscale_acls]: https://login.tailscale.com/admin/acls
 [tailscale_dns]: https://login.tailscale.com/admin/dns
