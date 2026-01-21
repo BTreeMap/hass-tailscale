@@ -97,7 +97,7 @@ jobs:
     name: 👷 Build & Deploy ${{ matrix.architecture }}
     needs: information
     # yamllint disable rule:line-length
-    runs-on: ${{ contains(fromJson('["armhf", "armv7", "aarch64"]'), matrix.architecture) && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    runs-on: ${{ contains(fromJson('["aarch64"]'), matrix.architecture) && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     # yamllint enable rule:line-length
     strategy:
       matrix:
@@ -126,12 +126,6 @@ jobs:
 
           if [[ "${{ matrix.architecture }}" = "amd64" ]]; then
             echo "platform=linux/amd64" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ matrix.architecture }}" = "i386" ]]; then
-            echo "platform=linux/386" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ matrix.architecture }}" = "armhf" ]]; then
-            echo "platform=linux/arm/v6" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ matrix.architecture }}" = "armv7" ]]; then
-            echo "platform=linux/arm/v7" >> "$GITHUB_OUTPUT"
           elif [[ "${{ matrix.architecture }}" = "aarch64" ]]; then
             echo "platform=linux/arm64/v8" >> "$GITHUB_OUTPUT"
           else
@@ -189,6 +183,44 @@ jobs:
             "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}/${{ matrix.architecture }}:${{ needs.information.outputs.environment }}"
           docker push \
             "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}/${{ matrix.architecture }}:${{ needs.information.outputs.version }}"
+
+  publish-manifest:
+    name: 📦 Publish multi-arch manifest
+    needs:
+      - information
+      - deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗️  Login to GitHub Container Registry
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: 📦 Create and push manifest
+        # yamllint disable rule:line-length
+        run: |
+          docker manifest create \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}:${{ needs.information.outputs.environment }}" \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}/amd64:${{ needs.information.outputs.environment }}" \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}/aarch64:${{ needs.information.outputs.environment }}"
+          docker manifest annotate \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}:${{ needs.information.outputs.environment }}" \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}/aarch64:${{ needs.information.outputs.environment }}" \
+            --arch arm64 --os linux
+          docker manifest create \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}:${{ needs.information.outputs.version }}" \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}/amd64:${{ needs.information.outputs.version }}" \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}/aarch64:${{ needs.information.outputs.version }}"
+          docker manifest annotate \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}:${{ needs.information.outputs.version }}" \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}/aarch64:${{ needs.information.outputs.version }}" \
+            --arch arm64 --os linux
+          docker manifest push \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}:${{ needs.information.outputs.environment }}"
+          docker manifest push \
+            "ghcr.io/${{ needs.information.outputs.registry_owner }}/${{ needs.information.outputs.slug }}:${{ needs.information.outputs.version }}"
+        # yamllint enable rule:line-length
 
   publish-edge:
     name: 📢 Publish to edge repository
