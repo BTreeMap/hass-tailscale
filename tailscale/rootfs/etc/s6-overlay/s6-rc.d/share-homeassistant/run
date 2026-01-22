@@ -16,6 +16,8 @@ declare DAL_WELL_KNOWN
 declare DAL_ASSETLINKS
 declare -a dal_sites=()
 declare share_mode
+declare port
+TAILSCALE_BIN="${TAILSCALE_BIN:-/opt/tailscale}"
 
 # Validate share_homeassistant value
 share_mode="$(bashio::config 'share_homeassistant')"
@@ -24,7 +26,7 @@ if [[ "${share_mode}" != "serve" && "${share_mode}" != "funnel" ]]; then
 fi
 
 # Check if Tailscale HTTPS is enabled
-if ! /opt/tailscale status --self=true --peers=false --json \
+if ! "${TAILSCALE_BIN}" status --self=true --peers=false --json \
   | jq -rce '.Self.CapMap | has("https")' > /dev/null;
 then
   bashio::exit.nok "Tailscale's HTTPS support is disabled"
@@ -43,7 +45,7 @@ while (( 200 != (curl_result=$(curl -s -o /dev/null -w "%{http_code}" "http://12
   bashio::log.info "Waiting for Home Assistant to be ready..."
   sleep $WAIT_DELAY
 done
-if (( wait_counter != 0 && curl_result == 200)); then
+if (( wait_counter != 0 && curl_result == 200 )); then
   bashio::log.info "Home Assistant is ready"
 fi
 
@@ -63,7 +65,7 @@ fi
 
 # Check if Funnel is available
 if [[ "${share_mode}" == "funnel" ]]; then
-  if ! /opt/tailscale status --self=true --peers=false --json \
+  if ! "${TAILSCALE_BIN}" status --self=true --peers=false --json \
     | jq -rce '.Self.CapMap | has("funnel")' > /dev/null;
   then
     bashio::exit.nok "Tailscale's Funnel support is disabled"
@@ -71,12 +73,30 @@ if [[ "${share_mode}" == "funnel" ]]; then
 fi
 
 # Configure Digital Asset Links when requested
-# De-duplicate entries while preserving order.
-readarray -t dal_sites < <(bashio::config 'digital_asset_links_sites // [] | .[]' | awk '!seen[$0]++')
+readarray -t dal_sites < <(bashio::config 'digital_asset_links_sites // [] | .[]')
+declare -a validated_dal_sites=()
+for site in "${dal_sites[@]}"; do
+  if [[ -z "${site}" ]]; then
+    continue
+  fi
+  if [[ ! "${site}" =~ ^https://[^/]+(:[1-9][0-9]*)?$ ]]; then
+    bashio::exit.nok "Invalid Digital Asset Links site '${site}'"
+  fi
+  if [[ "${site}" =~ :([0-9]+)$ ]]; then
+    port="${BASH_REMATCH[1]}"
+    if (( port == 0 || port > 65535 )); then
+      bashio::exit.nok "Invalid Digital Asset Links site '${site}'"
+    fi
+  fi
+  validated_dal_sites+=("${site}")
+done
+readarray -t dal_sites < <(printf '%s\n' "${validated_dal_sites[@]}" | sort -u)
 if (( 0 < ${#dal_sites[@]} )); then
   DAL_ROOT="/data/digital-asset-links"
   if [[ ! -d "/data" ]]; then
-    bashio::exit.nok "Digital Asset Links requires /data to be available"
+    if ! mkdir -p /data; then
+      bashio::exit.nok "Digital Asset Links requires /data to be available"
+    fi
   fi
   case "${DAL_ROOT}" in
     /data/digital-asset-links) ;;
@@ -98,7 +118,7 @@ if (( 0 < ${#dal_sites[@]} )); then
     bashio::exit.nok "Unable to generate Digital Asset Links data"
   fi
 
-  if ! /opt/tailscale "${share_mode}" \
+  if ! "${TAILSCALE_BIN}" "${share_mode}" \
     --https="$(bashio::config 'share_on_port' '443')" \
     --set-path=/.well-known/assetlinks.json "${DAL_ASSETLINKS}";
   then
@@ -110,6 +130,6 @@ fi
 echo "" >&3
 
 # Set up serve or funnel
-exec /opt/tailscale "${share_mode}" \
+exec "${TAILSCALE_BIN}" "${share_mode}" \
   --https="$(bashio::config 'share_on_port' '443')" --set-path=/ \
   "http://127.0.0.1:$(bashio::core.port)"

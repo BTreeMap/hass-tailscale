@@ -132,6 +132,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  test-pytest:
+    name: Pytest
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@v6
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3
+        with:
+          python-version: "3.12"
+      - name: 🧰 Install test dependencies
+        run: pip install -r requirements-test.txt
+      - name: 📁 Ensure /data exists
+        run: sudo mkdir -p /data
+      - name: ✅ Run pytest
+        run: pytest
+
   build:
     name: Build ${{ matrix.architecture }}
     needs:
