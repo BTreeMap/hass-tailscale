@@ -1,5 +1,5 @@
 {
-  "name": "Tailscale Home Assistant Add-ons",
+  "name": "Tailscale - multiset HA Add-ons",
   "url": "https://github.com/BTreeMap/hass-tailscale",
   "maintainer": "Joe Fang <hass-tailscale@oss.joefang.org>"
 }
