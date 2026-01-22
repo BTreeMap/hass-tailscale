@@ -60,7 +60,7 @@ jobs:
       - name: 🚀 Run Add-on Lint
         id: addon_lint
         continue-on-error: true
-        uses: frenck/action-addon-linter@f995494fd84fae6310d23617e66d0e37de4f14eb
+        uses: frenck/action-addon-linter@4e9b560e00b1e6adb8f039e2e293bb68d609250d
         with:
           community: true
           path: "./${{ needs.information.outputs.target }}"
