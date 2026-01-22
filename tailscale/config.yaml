@@ -12,6 +12,7 @@ panel_icon: mdi:vpn
 arch:
   - aarch64
   - amd64
+image: ghcr.io/btreemap/tailscale/{arch}
 init: false
 hassio_api: true
 host_network: true
