@@ -117,7 +117,7 @@ jobs:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v6
       - name: 🚀 Run YAMLLint
-        uses: frenck/action-yamllint@34b4bbcaeabedcfefad6adea8c5bbc42af0e2d47
+        uses: frenck/action-yamllint@60dba39102d6907e445657aec362cc02ef84a258
 
   lint-prettier:
     name: Prettier
