@@ -71,7 +71,7 @@ jobs:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v6
       - name: 🚀 Run Hadolint
-        uses: brpaz/hadolint-action@c27bd9edc1e95eed30474db8f295ff5807ebca14
+        uses: brpaz/hadolint-action@f49a60108f34b589e16e00be852f810e8ddb2484
         with:
           dockerfile: "./${{ needs.information.outputs.target }}/Dockerfile"
 
