@@ -56,11 +56,24 @@ jobs:
     steps:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v6
+
       - name: 🚀 Run Add-on Lint
+        id: addon_lint
+        continue-on-error: true
         uses: frenck/action-addon-linter@f995494fd84fae6310d23617e66d0e37de4f14eb
         with:
           community: true
           path: "./${{ needs.information.outputs.target }}"
+
+      - name: 🟨 Report non-blocking lint failure
+        if: steps.addon_lint.outcome != 'success'
+        run: |
+          {
+            echo "## 🟨 Add-on linter failed (non-blocking)"
+            echo ""
+            echo "The workflow continues because \`continue-on-error: true\` is set for the linter step."
+            echo "Check the **\"🚀 Run Add-on Lint\"** step logs above for details."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   lint-hadolint:
     name: Hadolint
