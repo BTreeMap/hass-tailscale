@@ -19,7 +19,7 @@ def write_config(tmp_path, *, share_mode="serve", sites=None, share_port=443):
         "digital_asset_links_sites": sites,
     }
     config_path = tmp_path / "config.json"
-    config_path.write_text(json.dumps(config))
+    config_path.write_text(json.dumps(config), encoding="utf-8")
     return config_path
 
 
@@ -33,6 +33,8 @@ def run_share(tmp_path, config_path, *, status_json=None, extra_env=None):
             capture_output=True,
             text=True,
         )
+    if status_json is None:
+        status_json = json.dumps({"Self": {"CapMap": {"https": True, "funnel": True}}})
     data_root = tmp_path / "data"
     env.update(
         {
@@ -50,7 +52,7 @@ def run_share(tmp_path, config_path, *, status_json=None, extra_env=None):
     if extra_env:
         env.update(extra_env)
     result = subprocess.run(
-        ["bash", str(RUN_SCRIPT)],
+        ["bash", "-c", f"exec 3>/dev/null; bash {RUN_SCRIPT}"],
         env=env,
         cwd=str(REPO_ROOT),
         capture_output=True,

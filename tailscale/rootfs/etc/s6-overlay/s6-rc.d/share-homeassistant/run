@@ -74,10 +74,10 @@ if [[ "${share_mode}" == "funnel" ]]; then
 fi
 
 # Configure Digital Asset Links when requested
-readarray -t dal_sites < <(bashio::config 'digital_asset_links_sites // [] | .[]')
+readarray -t dal_sites < <(bashio::config 'digital_asset_links_sites' '')
 declare -a validated_dal_sites=()
 for site in "${dal_sites[@]}"; do
-  if [[ -z "${site}" ]]; then
+  if [[ -z "${site}" || "${site}" == "null" ]]; then
     continue
   fi
   if [[ ! "${site}" =~ ^https://[^/]+(:[1-9][0-9]*)?$ ]]; then
