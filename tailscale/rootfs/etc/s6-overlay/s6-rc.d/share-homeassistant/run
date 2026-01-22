@@ -17,6 +17,7 @@ declare DAL_ASSETLINKS
 declare -a dal_sites=()
 declare share_mode
 declare port
+declare data_root
 TAILSCALE_BIN="${TAILSCALE_BIN:-/opt/tailscale}"
 
 # Validate share_homeassistant value
@@ -92,14 +93,15 @@ for site in "${dal_sites[@]}"; do
 done
 readarray -t dal_sites < <(printf '%s\n' "${validated_dal_sites[@]}" | sort -u)
 if (( 0 < ${#dal_sites[@]} )); then
-  DAL_ROOT="/data/digital-asset-links"
-  if [[ ! -d "/data" ]]; then
-    if ! mkdir -p /data; then
+  data_root="${DATA_DIR:-/data}"
+  if [[ ! -d "${data_root}" ]]; then
+    if ! mkdir -p "${data_root}"; then
       bashio::exit.nok "Digital Asset Links requires /data to be available"
     fi
   fi
+  DAL_ROOT="${data_root}/digital-asset-links"
   case "${DAL_ROOT}" in
-    /data/digital-asset-links) ;;
+    */digital-asset-links) ;;
     *) bashio::exit.nok "Unexpected Digital Asset Links data path" ;;
   esac
   DAL_WWW="${DAL_ROOT}/www"
