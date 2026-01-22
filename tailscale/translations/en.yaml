@@ -51,8 +51,15 @@ configuration:
     name: Login server
     description: >-
       This option allows you to specify a custom control server for this
-      Tailscale instance, for example, a self-host Headscale instance.
+      Tailscale instance, for example, a self-hosted Headscale instance.
       By default, it uses the control server provided by Tailscale.
+  digital_asset_links_sites:
+    name: Digital Asset Links sites
+    description: >-
+      This option allows you to list HTTPS origins that should be published in
+      /.well-known/assetlinks.json. Each entry must be an HTTPS origin without
+      a path. When share_homeassistant is set to serve or funnel, the add-on
+      uses Tailscale Serve to publish the file; otherwise it has no effect.
   share_homeassistant:
     name: Share Home Assistant with Serve or Funnel
     description: >-
