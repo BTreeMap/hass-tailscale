@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v6
       - name: 🚀 Run add-on information action
         id: information
-        uses: frenck/action-addon-information@792fd966f7e8ab051616802a9998c71650f24493
+        uses: frenck/action-addon-information@59d0c43ad00c2fed56da86572609065d7fa8a745
       - name: 🚀 Process possible slug override
         id: override
         run: |
