@@ -15,12 +15,12 @@ declare DAL_WWW
 declare DAL_WELL_KNOWN
 declare DAL_ASSETLINKS
 declare -a dal_sites=()
+declare share_mode
 
 # Validate share_homeassistant value
-if ! bashio::config.equals 'share_homeassistant' 'serve' && \
-  ! bashio::config.equals 'share_homeassistant' 'funnel'
-then
-  bashio::exit.nok "Invalid value '$(bashio::config 'share_homeassistant')' for share_homeassistant. Must be either 'serve' or 'funnel'"
+share_mode="$(bashio::config 'share_homeassistant')"
+if [[ "${share_mode}" != "serve" && "${share_mode}" != "funnel" ]]; then
+  bashio::exit.nok "Invalid value '${share_mode}' for share_homeassistant. Must be either 'serve' or 'funnel'"
 fi
 
 # Check if Tailscale HTTPS is enabled
@@ -62,7 +62,7 @@ else
 fi
 
 # Check if Funnel is available
-if bashio::config.equals 'share_homeassistant' 'funnel'; then
+if [[ "${share_mode}" == "funnel" ]]; then
   if ! /opt/tailscale status --self=true --peers=false --json \
     | jq -rce '.Self.CapMap | has("funnel")' > /dev/null;
   then
@@ -76,17 +76,18 @@ readarray -t dal_sites < <(bashio::config 'digital_asset_links_sites // [] | .[]
 if (( 0 < ${#dal_sites[@]} )); then
   DAL_ROOT="/data/digital-asset-links"
   if [[ ! -d "/data" ]]; then
-    DAL_ROOT="/var/lib/hass-digital-asset-links"
+    bashio::exit.nok "Digital Asset Links requires /data to be available"
   fi
   case "${DAL_ROOT}" in
-    /data/digital-asset-links|/var/lib/hass-digital-asset-links) ;;
+    /data/digital-asset-links) ;;
     *) bashio::exit.nok "Unexpected Digital Asset Links data path" ;;
   esac
   DAL_WWW="${DAL_ROOT}/www"
   DAL_WELL_KNOWN="${DAL_WWW}/.well-known"
   DAL_ASSETLINKS="${DAL_WELL_KNOWN}/assetlinks.json"
 
-  if [[ "${DAL_WWW}" == "${DAL_ROOT}/www" && -d "${DAL_WWW}" ]]; then
+  # DAL_WWW is derived from a fixed DAL_ROOT; no external input is used.
+  if [[ -d "${DAL_WWW}" ]]; then
     rm -rf "${DAL_WWW}"
   fi
   mkdir -p "${DAL_WELL_KNOWN}"
@@ -97,7 +98,8 @@ if (( 0 < ${#dal_sites[@]} )); then
     bashio::exit.nok "Unable to generate Digital Asset Links data"
   fi
 
-  if ! /opt/tailscale serve --https="$(bashio::config 'share_on_port' '443')" \
+  if ! /opt/tailscale "${share_mode}" \
+    --https="$(bashio::config 'share_on_port' '443')" \
     --set-path=/.well-known/assetlinks.json "${DAL_ASSETLINKS}";
   then
     bashio::exit.nok "Unable to configure Digital Asset Links serving"
@@ -108,6 +110,6 @@ fi
 echo "" >&3
 
 # Set up serve or funnel
-exec /opt/tailscale "$(bashio::config 'share_homeassistant')" \
+exec /opt/tailscale "${share_mode}" \
   --https="$(bashio::config 'share_on_port' '443')" --set-path=/ \
   "http://127.0.0.1:$(bashio::core.port)"

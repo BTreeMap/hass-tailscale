@@ -213,10 +213,10 @@ Digital Asset Links file at `/.well-known/assetlinks.json`.
 Each entry must be an HTTPS origin (for example, `https://example.com`). Origins
 with HTTP schemes or paths are rejected.
 
-When `share_homeassistant` is set to `serve` or `funnel`, the add-on uses
-Tailscale Serve to publish `/.well-known/assetlinks.json` alongside your Home
-Assistant endpoint. If `share_homeassistant` is disabled, this option has no
-effect.
+When `share_homeassistant` is set to `serve` or `funnel`, the add-on uses the
+same Tailscale Serve or Funnel mode to publish `/.well-known/assetlinks.json`
+alongside your Home Assistant endpoint. If `share_homeassistant` is disabled,
+this option has no effect.
 
 ### Option: `share_homeassistant`
 
