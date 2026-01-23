@@ -197,4 +197,4 @@ fi
 if [[ -n "${SHARE_HOMEASSISTANT_TEST_MODE:-}" ]]; then
   exit 0
 fi
-exec sleep infinity
+exec tail -f /dev/null -s 86400
