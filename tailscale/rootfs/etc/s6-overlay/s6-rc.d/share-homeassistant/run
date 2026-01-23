@@ -91,7 +91,7 @@ for site in "${dal_sites[@]}"; do
   fi
   validated_dal_sites+=("${site}")
 done
-readarray -t dal_sites < <(printf '%s\n' "${validated_dal_sites[@]}" | sort -u)
+readarray -t dal_sites < <(printf '%s\n' "${validated_dal_sites[@]}" | grep -v '^$' | sort -u)
 if (( 0 < ${#dal_sites[@]} )); then
   data_root="${DATA_DIR:-/data}"
   if [[ ! -d "${data_root}" ]]; then
