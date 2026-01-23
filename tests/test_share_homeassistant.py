@@ -180,23 +180,24 @@ def test_empty_sites_no_dal_serve_handler(tmp_path):
     assert serve_config_path.exists()
     serve_config = json.loads(serve_config_path.read_text())
     handlers = serve_config["Web"]["test-device.tailnet.ts.net:443"]["Handlers"]
-    assert "/.well-known/assetlinks.json" not in handlers
+    assert "/.well-known/" not in handlers
 
 
 def test_dal_serve_config_includes_handler(tmp_path):
-    """When DAL sites are configured, serve config should include the DAL path handler."""
+    """When DAL sites are configured, serve config should include the DAL directory handler."""
     config_path = write_config(tmp_path, sites=["https://example.com"])
     result, data_root, serve_config_path = run_share(tmp_path, config_path, capture_serve_config=True)
     assert result.returncode == 0
-    # Verify the ServeConfig contains the DAL handler
+    # Verify the ServeConfig contains the DAL handler for the .well-known directory
     assert serve_config_path.exists()
     serve_config = json.loads(serve_config_path.read_text())
     handlers = serve_config["Web"]["test-device.tailnet.ts.net:443"]["Handlers"]
-    assert "/.well-known/assetlinks.json" in handlers
-    dal_handler = handlers["/.well-known/assetlinks.json"]
+    # The handler serves the .well-known directory, not the specific file
+    assert "/.well-known/" in handlers
+    dal_handler = handlers["/.well-known/"]
     assert "Path" in dal_handler
-    # Verify the path points to the correct file
-    assert dal_handler["Path"].endswith("/digital-asset-links/www/.well-known/assetlinks.json")
+    # Verify the path points to the .well-known directory
+    assert dal_handler["Path"].endswith("/digital-asset-links/www/.well-known")
 
 
 def test_dal_serve_config_has_correct_structure(tmp_path):
@@ -218,8 +219,9 @@ def test_dal_serve_config_has_correct_structure(tmp_path):
     # Verify both handlers are present
     assert "/" in handlers
     assert "Proxy" in handlers["/"]
-    assert "/.well-known/assetlinks.json" in handlers
-    assert "Path" in handlers["/.well-known/assetlinks.json"]
+    # The handler serves the .well-known directory
+    assert "/.well-known/" in handlers
+    assert "Path" in handlers["/.well-known/"]
     # Verify AllowFunnel
     assert "AllowFunnel" in serve_config
     assert serve_config["AllowFunnel"][hostport] is False

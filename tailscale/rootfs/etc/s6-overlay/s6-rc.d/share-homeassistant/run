@@ -197,14 +197,18 @@ else
 fi
 
 # Generate the ServeConfig JSON (single listener, multiple handlers)
+# Note: Tailscale's Path handler serves a directory, not a single file.
+# We configure the handler for "/.well-known/" to serve from DAL_WELL_KNOWN directory,
+# so requests to "/.well-known/assetlinks.json" will serve the file correctly.
 bashio::log.info "Generating Tailscale ServeConfig..."
 if [[ "${DAL_ENABLED}" == "true" ]]; then
   bashio::log.info "Including Digital Asset Links handler in ServeConfig"
+  bashio::log.debug "DAL directory path for ServeConfig: ${DAL_WELL_KNOWN}"
   SERVE_CONFIG="$(jq -n \
     --arg port "${HTTPS_PORT}" \
     --arg hostport "${HOSTPORT}" \
     --arg proxy "${HA_PROXY}" \
-    --arg dal_path "${DAL_ASSETLINKS}" \
+    --arg dal_dir "${DAL_WELL_KNOWN}" \
     --argjson allow_funnel "${ALLOW_FUNNEL}" \
   '{
     TCP: { ($port): { HTTPS: true } },
@@ -212,7 +216,7 @@ if [[ "${DAL_ENABLED}" == "true" ]]; then
       ($hostport): {
         Handlers: {
           "/": { Proxy: $proxy },
-          "/.well-known/assetlinks.json": { Path: $dal_path }
+          "/.well-known/": { Path: $dal_dir }
         }
       }
     },
