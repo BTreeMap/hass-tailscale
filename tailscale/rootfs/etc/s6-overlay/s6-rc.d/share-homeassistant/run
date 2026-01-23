@@ -125,8 +125,8 @@ fi
 echo "" >&3
 
 # Obtain the device FQDN (HostPort host)
-FQDN="$("${TAILSCALE_BIN}" status --self --json | jq -r '.Self.DNSName' | sed 's/\.$//')"
-if [[ -z "${FQDN}" || "${FQDN}" == "null" ]]; then
+FQDN="$("${TAILSCALE_BIN}" status --self --json | jq -r '.Self.DNSName // empty' | sed 's/\.$//')"
+if [[ -z "${FQDN}" ]]; then
   bashio::exit.nok "Unable to determine Tailscale device DNS name"
 fi
 
@@ -197,4 +197,4 @@ fi
 if [[ -n "${SHARE_HOMEASSISTANT_TEST_MODE:-}" ]]; then
   exit 0
 fi
-exec tail -f /dev/null -s 86400
+exec sleep infinity
