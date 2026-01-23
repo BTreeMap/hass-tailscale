@@ -56,10 +56,12 @@ configuration:
   digital_asset_links_sites:
     name: Digital Asset Links sites
     description: >-
-      This option allows you to list HTTPS origins that should be published in
-      /.well-known/assetlinks.json. Each entry must be an HTTPS origin without
-      a path. When share_homeassistant is set to serve or funnel, the add-on
-      uses Tailscale Serve to publish the file; otherwise it has no effect.
+      This option allows you to list entries that should be published in
+      /.well-known/assetlinks.json. Entries are accepted as provided; if an
+      entry does not look like an HTTPS origin, a warning is logged and the
+      entry is still used. When share_homeassistant is set to serve or funnel,
+      the add-on uses Tailscale Serve to publish the file; otherwise it has no
+      effect.
   share_homeassistant:
     name: Share Home Assistant with Serve or Funnel
     description: >-

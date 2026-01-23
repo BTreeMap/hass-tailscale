@@ -86,22 +86,34 @@ def share_commands(log_path):
     return commands
 
 
-def test_rejects_http_origin(tmp_path):
+def test_accepts_http_origin_with_warning(tmp_path):
     config_path = write_config(tmp_path, sites=["http://example.com"])
-    result, _, _ = run_share(tmp_path, config_path)
-    assert result.returncode != 0
+    result, data_root, _ = run_share(tmp_path, config_path)
+    assert result.returncode == 0
+    assetlinks_path = data_root / "digital-asset-links/www/.well-known/assetlinks.json"
+    assert assetlinks_path.exists()
+    data = json.loads(assetlinks_path.read_text())
+    assert data[0]["target"]["site"] == "http://example.com"
 
 
-def test_rejects_origin_with_path(tmp_path):
+def test_accepts_origin_with_path(tmp_path):
     config_path = write_config(tmp_path, sites=["https://example.com/path"])
-    result, _, _ = run_share(tmp_path, config_path)
-    assert result.returncode != 0
+    result, data_root, _ = run_share(tmp_path, config_path)
+    assert result.returncode == 0
+    assetlinks_path = data_root / "digital-asset-links/www/.well-known/assetlinks.json"
+    assert assetlinks_path.exists()
+    data = json.loads(assetlinks_path.read_text())
+    assert data[0]["target"]["site"] == "https://example.com/path"
 
 
-def test_rejects_port_out_of_range(tmp_path):
+def test_accepts_port_out_of_range(tmp_path):
     config_path = write_config(tmp_path, sites=["https://example.com:65536"])
-    result, _, _ = run_share(tmp_path, config_path)
-    assert result.returncode != 0
+    result, data_root, _ = run_share(tmp_path, config_path)
+    assert result.returncode == 0
+    assetlinks_path = data_root / "digital-asset-links/www/.well-known/assetlinks.json"
+    assert assetlinks_path.exists()
+    data = json.loads(assetlinks_path.read_text())
+    assert data[0]["target"]["site"] == "https://example.com:65536"
 
 
 def test_accepts_valid_port_and_writes_assetlinks(tmp_path):
