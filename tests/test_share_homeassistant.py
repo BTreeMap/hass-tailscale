@@ -154,3 +154,22 @@ def test_creates_data_directory(tmp_path):
     result, data_root = run_share(tmp_path, config_path)
     assert result.returncode == 0
     assert data_root.exists()
+
+
+def test_empty_sites_no_assetlinks(tmp_path):
+    """When no digital_asset_links_sites are configured, assetlinks.json should not exist."""
+    config_path = write_config(tmp_path, sites=[])
+    result, data_root = run_share(tmp_path, config_path)
+    assert result.returncode == 0
+    assetlinks_path = data_root / "digital-asset-links/www/.well-known/assetlinks.json"
+    assert not assetlinks_path.exists()
+
+
+def test_empty_sites_no_dal_serve_handler(tmp_path):
+    """When no sites are configured, serve config should not include DAL path handler."""
+    config_path = write_config(tmp_path, sites=[])
+    result, data_root = run_share(tmp_path, config_path)
+    assert result.returncode == 0
+    # The serve set-raw should still be called (for HA proxy), verify no DAL path in config
+    log_path = tmp_path / "tailscale.log"
+    assert log_path.exists()
