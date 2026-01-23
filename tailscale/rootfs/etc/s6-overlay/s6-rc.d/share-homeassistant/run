@@ -74,7 +74,7 @@ fi
 
 # Configure Digital Asset Links when requested
 bashio::log.info "Processing Digital Asset Links configuration..."
-readarray -t dal_sites < <(bashio::config 'digital_asset_links_sites' '')
+mapfile -t dal_sites < <(bashio::jq "$(bashio::addon.config)" ".digital_asset_links_sites[]?")
 bashio::log.debug "Raw digital_asset_links_sites entries: ${#dal_sites[@]}"
 declare -a validated_dal_sites=()
 for site in "${dal_sites[@]}"; do
