@@ -210,8 +210,8 @@ own Tailscale control server, for example, a self-hosted [Headscale] instance.
 This option lets you configure HTTPS origins that should be published in the
 Digital Asset Links file at `/.well-known/assetlinks.json`.
 
-Each entry must be an HTTPS origin (for example, `https://example.com`). Origins
-with HTTP schemes or paths are rejected.
+Entries are accepted as provided. If an entry does not look like an HTTPS
+origin, the add-on logs a warning but still includes it.
 
 When `share_homeassistant` is set to `serve` or `funnel`, the add-on uses the
 same Tailscale Serve or Funnel mode to publish `/.well-known/assetlinks.json`

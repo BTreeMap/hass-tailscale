@@ -16,7 +16,6 @@ declare DAL_WELL_KNOWN
 declare DAL_ASSETLINKS
 declare -a dal_sites=()
 declare share_mode
-declare port
 declare data_root
 TAILSCALE_BIN="${TAILSCALE_BIN:-/opt/tailscale}"
 
@@ -84,17 +83,14 @@ for site in "${dal_sites[@]}"; do
     continue
   fi
   bashio::log.debug "Validating DAL site: ${site}"
-  if [[ ! "${site}" =~ ^https://[^/]+(:[1-9][0-9]*)?$ ]]; then
-    bashio::exit.nok "Invalid Digital Asset Links site '${site}'"
+  if [[ ! "${site}" =~ ^https:// ]]; then
+    bashio::log.warning "Digital Asset Links site '${site}' does not use https://"
   fi
-  if [[ "${site}" =~ :([0-9]+)$ ]]; then
-    port="${BASH_REMATCH[1]}"
-    if (( port == 0 || port > 65535 )); then
-      bashio::exit.nok "Invalid Digital Asset Links site '${site}'"
-    fi
+  if [[ "${site}" =~ [[:space:]] ]]; then
+    bashio::log.warning "Digital Asset Links site '${site}' contains whitespace"
   fi
   validated_dal_sites+=("${site}")
-  bashio::log.debug "Validated DAL site: ${site}"
+  bashio::log.debug "Accepted DAL site: ${site}"
 done
 readarray -t dal_sites < <(printf '%s\n' "${validated_dal_sites[@]}" | grep -v '^$' | sort -u)
 bashio::log.info "Total validated Digital Asset Links sites: ${#dal_sites[@]}"
