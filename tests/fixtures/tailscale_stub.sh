@@ -16,8 +16,12 @@ if [[ "${1:-}" == "status" ]]; then
 fi
 
 if [[ "${1:-}" == "serve" && "${2:-}" == "set-raw" ]]; then
-  # Read and discard stdin (the ServeConfig JSON)
-  cat > /dev/null
+  # Capture stdin (the ServeConfig JSON) to a file for test verification
+  if [[ -n "${TAILSCALE_SERVE_CONFIG_OUT:-}" ]]; then
+    cat > "${TAILSCALE_SERVE_CONFIG_OUT}"
+  else
+    cat > /dev/null
+  fi
   exit 0
 fi
 

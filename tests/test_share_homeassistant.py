@@ -23,7 +23,7 @@ def write_config(tmp_path, *, share_mode="serve", sites=None, share_port=443):
     return config_path
 
 
-def run_share(tmp_path, config_path, *, status_json=None, extra_env=None):
+def run_share(tmp_path, config_path, *, status_json=None, extra_env=None, capture_serve_config=False):
     env = os.environ.copy()
     bashio_dir = tmp_path / "bashio"
     if not bashio_dir.exists():
@@ -36,6 +36,7 @@ def run_share(tmp_path, config_path, *, status_json=None, extra_env=None):
     if status_json is None:
         status_json = json.dumps({"Self": {"CapMap": {"https": True, "funnel": True}, "DNSName": "test-device.tailnet.ts.net."}})
     data_root = tmp_path / "data"
+    serve_config_path = tmp_path / "serve_config.json" if capture_serve_config else None
     env.update(
         {
             "PATH": f"{FIXTURES}:{env['PATH']}",
@@ -48,6 +49,8 @@ def run_share(tmp_path, config_path, *, status_json=None, extra_env=None):
             "SHARE_HOMEASSISTANT_TEST_MODE": "1",
         }
     )
+    if serve_config_path:
+        env["TAILSCALE_SERVE_CONFIG_OUT"] = str(serve_config_path)
     if status_json is not None:
         env["TAILSCALE_STATUS_JSON"] = status_json
     if extra_env:
@@ -59,7 +62,7 @@ def run_share(tmp_path, config_path, *, status_json=None, extra_env=None):
         capture_output=True,
         text=True,
     )
-    return result, data_root
+    return result, data_root, serve_config_path
 
 
 def share_commands(log_path):
@@ -85,25 +88,25 @@ def share_commands(log_path):
 
 def test_rejects_http_origin(tmp_path):
     config_path = write_config(tmp_path, sites=["http://example.com"])
-    result, _ = run_share(tmp_path, config_path)
+    result, _, _ = run_share(tmp_path, config_path)
     assert result.returncode != 0
 
 
 def test_rejects_origin_with_path(tmp_path):
     config_path = write_config(tmp_path, sites=["https://example.com/path"])
-    result, _ = run_share(tmp_path, config_path)
+    result, _, _ = run_share(tmp_path, config_path)
     assert result.returncode != 0
 
 
 def test_rejects_port_out_of_range(tmp_path):
     config_path = write_config(tmp_path, sites=["https://example.com:65536"])
-    result, _ = run_share(tmp_path, config_path)
+    result, _, _ = run_share(tmp_path, config_path)
     assert result.returncode != 0
 
 
 def test_accepts_valid_port_and_writes_assetlinks(tmp_path):
     config_path = write_config(tmp_path, sites=["https://example.com:444"])
-    result, data_root = run_share(tmp_path, config_path)
+    result, data_root, _ = run_share(tmp_path, config_path)
     assert result.returncode == 0
     assetlinks_path = data_root / "digital-asset-links/www/.well-known/assetlinks.json"
     assert assetlinks_path.exists()
@@ -116,7 +119,7 @@ def test_deduplicates_and_sorts_sites(tmp_path):
         tmp_path,
         sites=["https://b.example.com", "https://a.example.com", "https://b.example.com"],
     )
-    result, data_root = run_share(tmp_path, config_path)
+    result, data_root, _ = run_share(tmp_path, config_path)
     assert result.returncode == 0
     data = json.loads(
         (data_root / "digital-asset-links/www/.well-known/assetlinks.json").read_text()
@@ -127,7 +130,7 @@ def test_deduplicates_and_sorts_sites(tmp_path):
 
 def test_share_mode_matches_dal(tmp_path):
     config_path = write_config(tmp_path, share_mode="serve", sites=["https://example.com"])
-    result, _ = run_share(tmp_path, config_path)
+    result, _, _ = run_share(tmp_path, config_path)
     assert result.returncode == 0
     # Now we use a single serve set-raw command instead of two serve commands
     assert share_commands(tmp_path / "tailscale.log") == [("serve", "set-raw")]
@@ -136,7 +139,7 @@ def test_share_mode_matches_dal(tmp_path):
 def test_share_mode_matches_dal_funnel(tmp_path):
     config_path = write_config(tmp_path, share_mode="funnel", sites=["https://example.com"])
     status_json = json.dumps({"Self": {"CapMap": {"https": True, "funnel": True}, "DNSName": "test-device.tailnet.ts.net."}})
-    result, _ = run_share(tmp_path, config_path, status_json=status_json)
+    result, _, _ = run_share(tmp_path, config_path, status_json=status_json)
     assert result.returncode == 0
     # Now we use a single serve set-raw command (even for funnel mode)
     assert share_commands(tmp_path / "tailscale.log") == [("serve", "set-raw")]
@@ -145,13 +148,13 @@ def test_share_mode_matches_dal_funnel(tmp_path):
 def test_funnel_requires_capability(tmp_path):
     config_path = write_config(tmp_path, share_mode="funnel")
     status_json = json.dumps({"Self": {"CapMap": {"https": True}}})
-    result, _ = run_share(tmp_path, config_path, status_json=status_json)
+    result, _, _ = run_share(tmp_path, config_path, status_json=status_json)
     assert result.returncode != 0
 
 
 def test_creates_data_directory(tmp_path):
     config_path = write_config(tmp_path, sites=["https://example.com"])
-    result, data_root = run_share(tmp_path, config_path)
+    result, data_root, _ = run_share(tmp_path, config_path)
     assert result.returncode == 0
     assert data_root.exists()
 
@@ -159,7 +162,7 @@ def test_creates_data_directory(tmp_path):
 def test_empty_sites_no_assetlinks(tmp_path):
     """When no digital_asset_links_sites are configured, assetlinks.json should not exist."""
     config_path = write_config(tmp_path, sites=[])
-    result, data_root = run_share(tmp_path, config_path)
+    result, data_root, _ = run_share(tmp_path, config_path)
     assert result.returncode == 0
     assetlinks_path = data_root / "digital-asset-links/www/.well-known/assetlinks.json"
     assert not assetlinks_path.exists()
@@ -168,8 +171,57 @@ def test_empty_sites_no_assetlinks(tmp_path):
 def test_empty_sites_no_dal_serve_handler(tmp_path):
     """When no sites are configured, serve config should not include DAL path handler."""
     config_path = write_config(tmp_path, sites=[])
-    result, data_root = run_share(tmp_path, config_path)
+    result, data_root, serve_config_path = run_share(tmp_path, config_path, capture_serve_config=True)
     assert result.returncode == 0
     # The serve set-raw should still be called (for HA proxy), verify no DAL path in config
     log_path = tmp_path / "tailscale.log"
     assert log_path.exists()
+    # Verify the ServeConfig does not contain the DAL handler
+    assert serve_config_path.exists()
+    serve_config = json.loads(serve_config_path.read_text())
+    handlers = serve_config["Web"]["test-device.tailnet.ts.net:443"]["Handlers"]
+    assert "/.well-known/" not in handlers
+
+
+def test_dal_serve_config_includes_handler(tmp_path):
+    """When DAL sites are configured, serve config should include the DAL directory handler."""
+    config_path = write_config(tmp_path, sites=["https://example.com"])
+    result, data_root, serve_config_path = run_share(tmp_path, config_path, capture_serve_config=True)
+    assert result.returncode == 0
+    # Verify the ServeConfig contains the DAL handler for the .well-known directory
+    assert serve_config_path.exists()
+    serve_config = json.loads(serve_config_path.read_text())
+    handlers = serve_config["Web"]["test-device.tailnet.ts.net:443"]["Handlers"]
+    # The handler serves the .well-known directory, not the specific file
+    assert "/.well-known/" in handlers
+    dal_handler = handlers["/.well-known/"]
+    assert "Path" in dal_handler
+    # Verify the path points to the .well-known directory
+    assert dal_handler["Path"].endswith("/digital-asset-links/www/.well-known")
+
+
+def test_dal_serve_config_has_correct_structure(tmp_path):
+    """Verify the full ServeConfig structure when DAL is configured."""
+    config_path = write_config(tmp_path, share_mode="serve", sites=["https://example.com"], share_port=443)
+    result, data_root, serve_config_path = run_share(tmp_path, config_path, capture_serve_config=True)
+    assert result.returncode == 0
+    assert serve_config_path.exists()
+    serve_config = json.loads(serve_config_path.read_text())
+    # Verify TCP listener
+    assert "TCP" in serve_config
+    assert "443" in serve_config["TCP"]
+    assert serve_config["TCP"]["443"]["HTTPS"] is True
+    # Verify Web handlers
+    assert "Web" in serve_config
+    hostport = "test-device.tailnet.ts.net:443"
+    assert hostport in serve_config["Web"]
+    handlers = serve_config["Web"][hostport]["Handlers"]
+    # Verify both handlers are present
+    assert "/" in handlers
+    assert "Proxy" in handlers["/"]
+    # The handler serves the .well-known directory
+    assert "/.well-known/" in handlers
+    assert "Path" in handlers["/.well-known/"]
+    # Verify AllowFunnel
+    assert "AllowFunnel" in serve_config
+    assert serve_config["AllowFunnel"][hostport] is False
