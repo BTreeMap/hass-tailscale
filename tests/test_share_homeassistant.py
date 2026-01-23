@@ -34,7 +34,7 @@ def run_share(tmp_path, config_path, *, status_json=None, extra_env=None):
             text=True,
         )
     if status_json is None:
-        status_json = json.dumps({"Self": {"CapMap": {"https": True, "funnel": True}}})
+        status_json = json.dumps({"Self": {"CapMap": {"https": True, "funnel": True}, "DNSName": "test-device.tailnet.ts.net."}})
     data_root = tmp_path / "data"
     env.update(
         {
@@ -45,6 +45,7 @@ def run_share(tmp_path, config_path, *, status_json=None, extra_env=None):
             "TAILSCALE_BIN": str(FIXTURES / "tailscale_stub.sh"),
             "TAILSCALE_LOG": str(tmp_path / "tailscale.log"),
             "DATA_DIR": str(data_root),
+            "SHARE_HOMEASSISTANT_TEST_MODE": "1",
         }
     )
     if status_json is not None:
@@ -62,13 +63,24 @@ def run_share(tmp_path, config_path, *, status_json=None, extra_env=None):
 
 
 def share_commands(log_path):
+    """Extract tailscale commands from the log file.
+
+    Returns a list of command tuples (e.g., ['serve', 'set-raw'] for set-raw,
+    or ['serve'] for regular serve commands).
+    """
     log_lines = log_path.read_text().splitlines()
     commands = []
     for line in log_lines:
         parts = line.split()
         if len(parts) > 1:
-            commands.append(parts[1])
-    return [cmd for cmd in commands if cmd in ("serve", "funnel")]
+            cmd = parts[1]
+            if cmd in ("serve", "funnel"):
+                # Check if this is a set-raw command
+                if len(parts) > 2 and parts[2] == "set-raw":
+                    commands.append((cmd, "set-raw"))
+                else:
+                    commands.append((cmd,))
+    return commands
 
 
 def test_rejects_http_origin(tmp_path):
@@ -117,15 +129,17 @@ def test_share_mode_matches_dal(tmp_path):
     config_path = write_config(tmp_path, share_mode="serve", sites=["https://example.com"])
     result, _ = run_share(tmp_path, config_path)
     assert result.returncode == 0
-    assert share_commands(tmp_path / "tailscale.log") == ["serve", "serve"]
+    # Now we use a single serve set-raw command instead of two serve commands
+    assert share_commands(tmp_path / "tailscale.log") == [("serve", "set-raw")]
 
 
 def test_share_mode_matches_dal_funnel(tmp_path):
     config_path = write_config(tmp_path, share_mode="funnel", sites=["https://example.com"])
-    status_json = json.dumps({"Self": {"CapMap": {"https": True, "funnel": True}}})
+    status_json = json.dumps({"Self": {"CapMap": {"https": True, "funnel": True}, "DNSName": "test-device.tailnet.ts.net."}})
     result, _ = run_share(tmp_path, config_path, status_json=status_json)
     assert result.returncode == 0
-    assert share_commands(tmp_path / "tailscale.log") == ["funnel", "funnel"]
+    # Now we use a single serve set-raw command (even for funnel mode)
+    assert share_commands(tmp_path / "tailscale.log") == [("serve", "set-raw")]
 
 
 def test_funnel_requires_capability(tmp_path):
