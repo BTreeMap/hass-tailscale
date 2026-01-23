@@ -83,7 +83,7 @@ our [GitHub Repository][repository].
 [github-actions]: https://github.com/BTreeMap/hass-tailscale/actions
 [issue]: https://github.com/BTreeMap/hass-tailscale/issues
 [license-shield]: https://img.shields.io/github/license/BTreeMap/hass-tailscale.svg
-[maintenance-shield]: https://img.shields.io/maintenance/yes/2025.svg
+[maintenance-shield]: https://img.shields.io/maintenance/yes/2026.svg
 [project-stage-shield]: https://img.shields.io/badge/project%20stage-experimental-yellow.svg
 [reddit]: https://reddit.com/r/homeassistant
 [releases-shield]: https://img.shields.io/github/release/BTreeMap/hass-tailscale.svg

@@ -120,7 +120,7 @@ if (( 0 < ${#dal_sites[@]} )); then
     bashio::exit.nok "Unable to generate Digital Asset Links data"
   fi
 
-  if ! "${TAILSCALE_BIN}" "${share_mode}" \
+  if ! "${TAILSCALE_BIN}" "${share_mode}" --bg \
     --https="$(bashio::config 'share_on_port' '443')" \
     --set-path=/.well-known/assetlinks.json "${DAL_ASSETLINKS}";
   then
