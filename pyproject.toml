@@ -1,0 +1,9 @@
+[project]
+name = "hass-tailscale-tests"
+version = "0.0.0"
+description = "Test dependencies for hass-tailscale"
+requires-python = ">=3.12"
+dependencies = [
+  "pytest==9.0.2",
+]
+

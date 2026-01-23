@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+if [[ "${CURL_FAIL:-}" == "true" ]]; then
+  printf '500'
+else
+  printf '200'
+fi

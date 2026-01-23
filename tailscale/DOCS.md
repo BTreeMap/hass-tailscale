@@ -67,6 +67,8 @@ advertise_routes:
 exit_node: 100.101.102.103
 log_level: info
 login_server: "https://controlplane.tailscale.com"
+digital_asset_links_sites:
+  - "https://example.com"
 share_homeassistant: disabled
 share_on_port: 443
 snat_subnet_routes: true
@@ -199,9 +201,22 @@ you are troubleshooting.
 
 ### Option: `login_server`
 
-This option lets you to specify a custom control server instead of the default
+This option lets you specify a custom control server instead of the default
 (`https://controlplane.tailscale.com`). This is useful if you are running your
 own Tailscale control server, for example, a self-hosted [Headscale] instance.
+
+### Option: `digital_asset_links_sites`
+
+This option lets you configure HTTPS origins that should be published in the
+Digital Asset Links file at `/.well-known/assetlinks.json`.
+
+Each entry must be an HTTPS origin (for example, `https://example.com`). Origins
+with HTTP schemes or paths are rejected.
+
+When `share_homeassistant` is set to `serve` or `funnel`, the add-on uses the
+same Tailscale Serve or Funnel mode to publish `/.well-known/assetlinks.json`
+alongside your Home Assistant endpoint. If `share_homeassistant` is disabled,
+this option has no effect.
 
 ### Option: `share_homeassistant`
 

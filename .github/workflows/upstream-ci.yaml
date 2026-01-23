@@ -132,6 +132,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  test-pytest:
+    name: Pytest
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@v6
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: ⚡ Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.26"
+      - name: 🧰 Install test dependencies
+        run: uv sync --no-dev
+      - name: ✅ Run pytest
+        run: uv run pytest
+
   build:
     name: Build ${{ matrix.architecture }}
     needs:
