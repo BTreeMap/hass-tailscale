@@ -119,19 +119,82 @@ if (( 0 < ${#dal_sites[@]} )); then
   then
     bashio::exit.nok "Unable to generate Digital Asset Links data"
   fi
-
-  if ! "${TAILSCALE_BIN}" "${share_mode}" --bg \
-    --https="$(bashio::config 'share_on_port' '443')" \
-    --set-path=/.well-known/assetlinks.json "${DAL_ASSETLINKS}";
-  then
-    bashio::exit.nok "Unable to configure Digital Asset Links serving"
-  fi
 fi
 
 # This service can wait for HA for minutes, let notify S6 when we are really starting
 echo "" >&3
 
-# Set up serve or funnel
-exec "${TAILSCALE_BIN}" "${share_mode}" \
-  --https="$(bashio::config 'share_on_port' '443')" --set-path=/ \
-  "http://127.0.0.1:$(bashio::core.port)"
+# Obtain the device FQDN (HostPort host)
+FQDN="$("${TAILSCALE_BIN}" status --self --json | jq -r '.Self.DNSName' | sed 's/\.$//')"
+if [[ -z "${FQDN}" || "${FQDN}" == "null" ]]; then
+  bashio::exit.nok "Unable to determine Tailscale device DNS name"
+fi
+
+# Obtain listen port and HA upstream
+HTTPS_PORT="$(bashio::config 'share_on_port' '443')"
+HOSTPORT="${FQDN}:${HTTPS_PORT}"
+
+HA_PORT="$(bashio::core.port)"
+HA_PROXY="http://127.0.0.1:${HA_PORT}"
+
+# Decide whether Funnel should be enabled (JSON boolean only)
+ALLOW_FUNNEL=false
+if [[ "${share_mode}" == "funnel" ]]; then
+  ALLOW_FUNNEL=true
+fi
+
+# Determine whether DAL handler should be included
+DAL_ENABLED=false
+if [[ -n "${DAL_ASSETLINKS:-}" && -f "${DAL_ASSETLINKS:-}" ]]; then
+  DAL_ENABLED=true
+fi
+
+# Generate the ServeConfig JSON (single listener, multiple handlers)
+if [[ "${DAL_ENABLED}" == "true" ]]; then
+  SERVE_CONFIG="$(jq -n \
+    --arg port "${HTTPS_PORT}" \
+    --arg hostport "${HOSTPORT}" \
+    --arg proxy "${HA_PROXY}" \
+    --arg dal_path "${DAL_ASSETLINKS}" \
+    --argjson allow_funnel "${ALLOW_FUNNEL}" \
+  '{
+    TCP: { ($port): { HTTPS: true } },
+    Web: {
+      ($hostport): {
+        Handlers: {
+          "/": { Proxy: $proxy },
+          "/.well-known/assetlinks.json": { Path: $dal_path }
+        }
+      }
+    },
+    AllowFunnel: { ($hostport): $allow_funnel }
+  }')"
+else
+  SERVE_CONFIG="$(jq -n \
+    --arg port "${HTTPS_PORT}" \
+    --arg hostport "${HOSTPORT}" \
+    --arg proxy "${HA_PROXY}" \
+    --argjson allow_funnel "${ALLOW_FUNNEL}" \
+  '{
+    TCP: { ($port): { HTTPS: true } },
+    Web: {
+      ($hostport): {
+        Handlers: {
+          "/": { Proxy: $proxy }
+        }
+      }
+    },
+    AllowFunnel: { ($hostport): $allow_funnel }
+  }')"
+fi
+
+# Apply the ServeConfig exactly once with set-raw
+if ! printf '%s' "${SERVE_CONFIG}" | "${TAILSCALE_BIN}" serve set-raw; then
+  bashio::exit.nok "Unable to apply Tailscale ServeConfig via set-raw"
+fi
+
+# Keep the s6 longrun service alive (exit in test mode)
+if [[ -n "${SHARE_HOMEASSISTANT_TEST_MODE:-}" ]]; then
+  exit 0
+fi
+exec tail -f /dev/null -s 86400
