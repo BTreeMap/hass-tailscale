@@ -74,12 +74,16 @@ if [[ "${share_mode}" == "funnel" ]]; then
 fi
 
 # Configure Digital Asset Links when requested
+bashio::log.info "Processing Digital Asset Links configuration..."
 readarray -t dal_sites < <(bashio::config 'digital_asset_links_sites' '')
+bashio::log.debug "Raw digital_asset_links_sites entries: ${#dal_sites[@]}"
 declare -a validated_dal_sites=()
 for site in "${dal_sites[@]}"; do
   if [[ -z "${site}" || "${site}" == "null" ]]; then
+    bashio::log.debug "Skipping empty or null DAL site entry"
     continue
   fi
+  bashio::log.debug "Validating DAL site: ${site}"
   if [[ ! "${site}" =~ ^https://[^/]+(:[1-9][0-9]*)?$ ]]; then
     bashio::exit.nok "Invalid Digital Asset Links site '${site}'"
   fi
@@ -90,11 +94,20 @@ for site in "${dal_sites[@]}"; do
     fi
   fi
   validated_dal_sites+=("${site}")
+  bashio::log.debug "Validated DAL site: ${site}"
 done
 readarray -t dal_sites < <(printf '%s\n' "${validated_dal_sites[@]}" | grep -v '^$' | sort -u)
+bashio::log.info "Total validated Digital Asset Links sites: ${#dal_sites[@]}"
 if (( 0 < ${#dal_sites[@]} )); then
+  bashio::log.info "Setting up Digital Asset Links with ${#dal_sites[@]} site(s)..."
+  for site in "${dal_sites[@]}"; do
+    bashio::log.debug "  - ${site}"
+  done
+
   data_root="${DATA_DIR:-/data}"
+  bashio::log.debug "Using data root: ${data_root}"
   if [[ ! -d "${data_root}" ]]; then
+    bashio::log.info "Creating data root directory: ${data_root}"
     if ! mkdir -p "${data_root}"; then
       bashio::exit.nok "Digital Asset Links requires /data to be available"
     fi
@@ -107,50 +120,86 @@ if (( 0 < ${#dal_sites[@]} )); then
   DAL_WWW="${DAL_ROOT}/www"
   DAL_WELL_KNOWN="${DAL_WWW}/.well-known"
   DAL_ASSETLINKS="${DAL_WELL_KNOWN}/assetlinks.json"
+  bashio::log.debug "DAL_ROOT: ${DAL_ROOT}"
+  bashio::log.debug "DAL_WWW: ${DAL_WWW}"
+  bashio::log.debug "DAL_WELL_KNOWN: ${DAL_WELL_KNOWN}"
+  bashio::log.debug "DAL_ASSETLINKS: ${DAL_ASSETLINKS}"
 
   # DAL_WWW is derived from a fixed DAL_ROOT; no external input is used.
   if [[ -d "${DAL_WWW}" ]]; then
+    bashio::log.debug "Removing existing DAL www directory"
     rm -rf "${DAL_WWW}"
   fi
+  bashio::log.info "Creating Digital Asset Links directory structure..."
   mkdir -p "${DAL_WELL_KNOWN}"
+  bashio::log.info "Generating assetlinks.json file..."
   if ! printf '%s\n' "${dal_sites[@]}" \
     | jq -Rn '[inputs | select(length > 0) | {relation:["delegate_permission/common.get_login_creds"], target:{namespace:"web", site:.}}]' \
     > "${DAL_ASSETLINKS}";
   then
     bashio::exit.nok "Unable to generate Digital Asset Links data"
   fi
+
+  # Verify the file was created and has content
+  if [[ ! -f "${DAL_ASSETLINKS}" ]]; then
+    bashio::exit.nok "Digital Asset Links file was not created at ${DAL_ASSETLINKS}"
+  fi
+  bashio::log.info "Digital Asset Links file created successfully at: ${DAL_ASSETLINKS}"
+  bashio::log.debug "File size: $(stat -c%s "${DAL_ASSETLINKS}") bytes"
+  bashio::log.debug "File contents:"
+  bashio::log.debug "$(cat "${DAL_ASSETLINKS}")"
+else
+  bashio::log.info "No Digital Asset Links sites configured, skipping DAL setup"
 fi
 
 # This service can wait for HA for minutes, let notify S6 when we are really starting
 echo "" >&3
 
 # Obtain the device FQDN (HostPort host)
+bashio::log.info "Obtaining Tailscale device DNS name..."
 FQDN="$("${TAILSCALE_BIN}" status --self --json | jq -r '.Self.DNSName // empty' | sed 's/\.$//')"
 if [[ -z "${FQDN}" ]]; then
   bashio::exit.nok "Unable to determine Tailscale device DNS name"
 fi
+bashio::log.info "Tailscale FQDN: ${FQDN}"
 
 # Obtain listen port and HA upstream
 HTTPS_PORT="$(bashio::config 'share_on_port' '443')"
 HOSTPORT="${FQDN}:${HTTPS_PORT}"
+bashio::log.debug "HTTPS_PORT: ${HTTPS_PORT}"
+bashio::log.debug "HOSTPORT: ${HOSTPORT}"
 
 HA_PORT="$(bashio::core.port)"
 HA_PROXY="http://127.0.0.1:${HA_PORT}"
+bashio::log.debug "HA_PORT: ${HA_PORT}"
+bashio::log.debug "HA_PROXY: ${HA_PROXY}"
 
 # Decide whether Funnel should be enabled (JSON boolean only)
 ALLOW_FUNNEL=false
 if [[ "${share_mode}" == "funnel" ]]; then
   ALLOW_FUNNEL=true
 fi
+bashio::log.debug "ALLOW_FUNNEL: ${ALLOW_FUNNEL}"
 
 # Determine whether DAL handler should be included
 DAL_ENABLED=false
 if [[ -n "${DAL_ASSETLINKS:-}" && -f "${DAL_ASSETLINKS:-}" ]]; then
   DAL_ENABLED=true
+  bashio::log.info "Digital Asset Links handler will be enabled"
+  bashio::log.debug "DAL file path for ServeConfig: ${DAL_ASSETLINKS}"
+else
+  bashio::log.info "Digital Asset Links handler will NOT be enabled"
+  if [[ -z "${DAL_ASSETLINKS:-}" ]]; then
+    bashio::log.debug "DAL_ASSETLINKS variable is empty or unset"
+  elif [[ ! -f "${DAL_ASSETLINKS:-}" ]]; then
+    bashio::log.debug "DAL_ASSETLINKS file does not exist: ${DAL_ASSETLINKS:-}"
+  fi
 fi
 
 # Generate the ServeConfig JSON (single listener, multiple handlers)
+bashio::log.info "Generating Tailscale ServeConfig..."
 if [[ "${DAL_ENABLED}" == "true" ]]; then
+  bashio::log.info "Including Digital Asset Links handler in ServeConfig"
   SERVE_CONFIG="$(jq -n \
     --arg port "${HTTPS_PORT}" \
     --arg hostport "${HOSTPORT}" \
@@ -170,6 +219,7 @@ if [[ "${DAL_ENABLED}" == "true" ]]; then
     AllowFunnel: { ($hostport): $allow_funnel }
   }')"
 else
+  bashio::log.info "Generating ServeConfig without Digital Asset Links handler"
   SERVE_CONFIG="$(jq -n \
     --arg port "${HTTPS_PORT}" \
     --arg hostport "${HOSTPORT}" \
@@ -188,9 +238,21 @@ else
   }')"
 fi
 
+# Log the ServeConfig for debugging
+bashio::log.debug "Generated ServeConfig:"
+bashio::log.debug "${SERVE_CONFIG}"
+
 # Apply the ServeConfig exactly once with set-raw
+bashio::log.info "Applying Tailscale ServeConfig via set-raw..."
 if ! printf '%s' "${SERVE_CONFIG}" | "${TAILSCALE_BIN}" serve set-raw; then
   bashio::exit.nok "Unable to apply Tailscale ServeConfig via set-raw"
+fi
+bashio::log.info "Tailscale ServeConfig applied successfully"
+
+# Log the final serve status for verification
+bashio::log.info "Tailscale Serve configuration completed"
+if [[ "${DAL_ENABLED}" == "true" ]]; then
+  bashio::log.info "Digital Asset Links endpoint available at: https://${FQDN}/.well-known/assetlinks.json"
 fi
 
 # Keep the s6 longrun service alive (exit in test mode)
