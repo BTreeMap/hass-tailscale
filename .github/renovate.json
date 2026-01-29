@@ -1,31 +1,74 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", "customManagers:dockerfileVersions"],
+  "extends": [
+    "config:recommended",
+    "customManagers:dockerfileVersions"
+  ],
   "rebaseWhen": "behind-base-branch",
   "dependencyDashboard": true,
-  "labels": ["dependencies", "no-stale"],
+  "labels": [
+    "dependencies",
+    "no-stale"
+  ],
   "commitMessagePrefix": "⬆️",
   "commitMessageTopic": "{{depName}}",
   "packageRules": [
     {
-      "matchDatasources": ["repology"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "automerge": true
+      "groupName": "Add-on base image",
+      "matchDatasources": [
+        "docker"
+      ]
     },
     {
       "groupName": "Add-on base image",
-      "matchDatasources": ["docker"],
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "automerge": true
     },
     {
-      "matchDatasources": ["github-releases"],
-      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "GitHub Releases",
+      "matchDatasources": [
+        "github-releases"
+      ]
+    },
+    {
+      "groupName": "GitHub Releases",
+      "matchDatasources": [
+        "github-releases"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "automerge": true
     },
     {
-      "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Repology",
+      "matchDatasources": [
+        "repology"
+      ],
+      "automerge": true
+    },
+    {
+      "groupName": "GitHub Actions",
+      "matchManagers": [
+        "github-actions"
+      ]
+    },
+    {
+      "groupName": "GitHub Actions",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "automerge": true
     }
   ]
