@@ -48,7 +48,6 @@ jobs:
     outputs:
       architectures: ${{ steps.information.outputs.architectures }}
       base_image_signer: ${{ steps.information.outputs.codenotary_base_image }}
-      build: ${{ steps.information.outputs.build }}
       description: ${{ steps.information.outputs.description }}
       environment: ${{ steps.release.outputs.environment }}
       name: ${{ steps.information.outputs.name }}
@@ -121,8 +120,6 @@ jobs:
         id: flags
         run: |
           echo "date=$(date +"%Y-%m-%dT%H:%M:%SZ")" >> "$GITHUB_OUTPUT"
-          from=$(yq --no-colors eval ".build_from.${{ matrix.architecture }}" "${{ needs.information.outputs.build }}")
-          echo "from=${from}" >> "$GITHUB_OUTPUT"
 
           if [[ "${{ matrix.architecture }}" = "amd64" ]]; then
             echo "platform=linux/amd64" >> "$GITHUB_OUTPUT"
@@ -138,9 +135,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: ⤵️ Download base image
-        if: steps.flags.outputs.from != 'null'
-        run: docker pull "${{ steps.flags.outputs.from }}"
       - name: 🚀 Build
         uses: docker/build-push-action@64c9b141502b80dbbd71e008a0130ad330f480f8
         with:
@@ -163,7 +157,6 @@ jobs:
             BUILD_ARCH=${{ matrix.architecture }}
             BUILD_DATE=${{ steps.flags.outputs.date }}
             BUILD_DESCRIPTION=${{ needs.information.outputs.description }}
-            BUILD_FROM=${{ steps.flags.outputs.from }}
             BUILD_NAME=${{ needs.information.outputs.name }}
             BUILD_REF=${{ github.sha }}
             BUILD_REPOSITORY=${{ github.repository }}
