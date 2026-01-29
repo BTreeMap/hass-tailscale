@@ -19,7 +19,7 @@ ARG IPTABLES_VERSION="1.8.11-r1"
 # renovate: datasource=repology depName=networkmanager packageName=alpine_3_23/networkmanager versioning=loose
 ARG NETWORKMANAGER_VERSION="1.52.1-r0"
 # renovate: datasource=repology depName=nginx packageName=alpine_3_23/nginx versioning=loose
-ARG NGINX_VERSION="1.28.0-r3"
+ARG NGINX_VERSION="1.28.0-r8"
 
 # renovate: datasource=github-releases depName=tailscale packageName=tailscale/tailscale versioning=loose extractVersion=^v(?<version>.*)$
 ARG TAILSCALE_VERSION="1.92.5"
