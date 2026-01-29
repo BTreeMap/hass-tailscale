@@ -11,7 +11,7 @@ ARG COREUTILS_VERSION="9.7-r1"
 # renovate: datasource=repology depName=ethtool packageName=alpine_3_23/ethtool versioning=loose
 ARG ETHTOOL_VERSION="6.14.1-r0"
 # renovate: datasource=repology depName=ipcalc packageName=alpine_3_23/ipcalc versioning=loose
-ARG IPCALC_VERSION="1.0.3-r0"
+ARG IPCALC_VERSION="1.0.3-r1"
 # renovate: datasource=repology depName=iproute2 packageName=alpine_3_23/iproute2 versioning=loose
 ARG IPROUTE2_VERSION="6.15.0-r0"
 # renovate: datasource=repology depName=iptables packageName=alpine_3_23/iptables versioning=loose
