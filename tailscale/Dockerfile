@@ -7,19 +7,19 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG BUILD_ARCH=amd64
 
 # renovate: datasource=repology depName=coreutils packageName=alpine_3_23/coreutils versioning=loose
-ARG COREUTILS_VERSION="9.7-r1"
+ARG COREUTILS_VERSION="9.8-r1"
 # renovate: datasource=repology depName=ethtool packageName=alpine_3_23/ethtool versioning=loose
-ARG ETHTOOL_VERSION="6.14.1-r0"
+ARG ETHTOOL_VERSION="6.15-r0"
 # renovate: datasource=repology depName=ipcalc packageName=alpine_3_23/ipcalc versioning=loose
-ARG IPCALC_VERSION="1.0.3-r0"
+ARG IPCALC_VERSION="1.0.3-r1"
 # renovate: datasource=repology depName=iproute2 packageName=alpine_3_23/iproute2 versioning=loose
-ARG IPROUTE2_VERSION="6.15.0-r0"
+ARG IPROUTE2_VERSION="6.17.0-r0"
 # renovate: datasource=repology depName=iptables packageName=alpine_3_23/iptables versioning=loose
 ARG IPTABLES_VERSION="1.8.11-r1"
 # renovate: datasource=repology depName=networkmanager packageName=alpine_3_23/networkmanager versioning=loose
-ARG NETWORKMANAGER_VERSION="1.52.1-r0"
+ARG NETWORKMANAGER_VERSION="1.54.3-r0"
 # renovate: datasource=repology depName=nginx packageName=alpine_3_23/nginx versioning=loose
-ARG NGINX_VERSION="1.28.0-r3"
+ARG NGINX_VERSION="1.28.0-r8"
 
 # renovate: datasource=github-releases depName=tailscale packageName=tailscale/tailscale versioning=loose extractVersion=^v(?<version>.*)$
 ARG TAILSCALE_VERSION="1.92.5"
