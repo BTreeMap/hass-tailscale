@@ -113,9 +113,9 @@ jobs:
           restore-keys: |
             docker-${{ matrix.architecture }}
       - name: 🏗 Set up QEMU
-        uses: docker/setup-qemu-action@45136fd328ae20ed788d00d3bada68ab496c214c
+        uses: docker/setup-qemu-action@7e10951aea186e886cef2f1a25a7bbf4e593d710
       - name: 🏗 Set up Docker Buildx
-        uses: docker/setup-buildx-action@c7c4c00f3eef127be487a50899a220e44c6bcc87
+        uses: docker/setup-buildx-action@7c525be6cc8a882d5163ce04293cac18617c709f
       - name: ℹ️ Compose build flags
         id: flags
         run: |
@@ -130,13 +130,13 @@ jobs:
             exit 1
           fi
       - name: 🏗  Login to GitHub Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        uses: docker/login-action@8e2a0b642a6296f5b70071b54b587ef363155acd
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: 🚀 Build
-        uses: docker/build-push-action@64c9b141502b80dbbd71e008a0130ad330f480f8
+        uses: docker/build-push-action@8c1e8f8e5bf845ba3773a14f3967965548a2341e
         with:
           load: true
           # yamllint disable rule:line-length
@@ -185,7 +185,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 🏗️  Login to GitHub Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        uses: docker/login-action@8e2a0b642a6296f5b70071b54b587ef363155acd
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
