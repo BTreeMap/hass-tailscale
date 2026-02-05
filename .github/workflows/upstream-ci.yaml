@@ -144,7 +144,7 @@ jobs:
       - name: ⚡ Set up uv
         uses: astral-sh/setup-uv@v7
         with:
-          version: "0.9.29"
+          version: "0.9.30"
       - name: 🧰 Install test dependencies
         run: uv sync --no-dev
       - name: ✅ Run pytest
