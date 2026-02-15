@@ -144,7 +144,7 @@ jobs:
       - name: ⚡ Set up uv
         uses: astral-sh/setup-uv@v7
         with:
-          version: "0.9.28"
+          version: "0.10.2"
       - name: 🧰 Install test dependencies
         run: uv sync --no-dev
       - name: ✅ Run pytest
@@ -195,7 +195,7 @@ jobs:
             exit 1
           fi
       - name: 🚀 Build
-        uses: docker/build-push-action@8c1e8f8e5bf845ba3773a14f3967965548a2341e
+        uses: docker/build-push-action@ee4ca427a2f43b6a16632044ca514c076267da23
         with:
           push: false
           context: ${{ needs.information.outputs.target }}
