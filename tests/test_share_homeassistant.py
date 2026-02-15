@@ -3,7 +3,6 @@ import os
 import subprocess
 from pathlib import Path
 
-import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RUN_SCRIPT = REPO_ROOT / "tailscale/rootfs/etc/s6-overlay/s6-rc.d/share-homeassistant/run"
