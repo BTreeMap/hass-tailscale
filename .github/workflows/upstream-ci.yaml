@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v6
       - name: 🚀 Run add-on information action
         id: information
-        uses: frenck/action-addon-information@59d0c43ad00c2fed56da86572609065d7fa8a745
+        uses: frenck/action-addon-information@74dfadd8ea98f99db15eb45488232c908e667b9c
       - name: 🚀 Process possible slug override
         id: override
         run: |
@@ -59,7 +59,7 @@ jobs:
       - name: 🚀 Run Add-on Lint
         id: addon_lint
         continue-on-error: true
-        uses: frenck/action-addon-linter@4e9b560e00b1e6adb8f039e2e293bb68d609250d
+        uses: frenck/action-addon-linter@be682993f25ab0658cca12fb0445f37683c42ce2
         with:
           community: true
           path: "./${{ needs.information.outputs.target }}"
@@ -116,7 +116,7 @@ jobs:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v6
       - name: 🚀 Run YAMLLint
-        uses: frenck/action-yamllint@b284eb01d8c28076998f7c31c62a62c1e7eea19b
+        uses: frenck/action-yamllint@db6dd8f58270fb7ed4ff087b08548308130a5ad5
 
   lint-prettier:
     name: Prettier
