@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v6
       - name: 🚀 Run add-on information action
         id: information
-        uses: frenck/action-addon-information@74dfadd8ea98f99db15eb45488232c908e667b9c
+        uses: frenck/action-addon-information@351612be00c21d6f6f982040a08f95fb7ab9e714
       - name: 🚀 Process possible slug override
         id: override
         run: |
@@ -59,7 +59,7 @@ jobs:
       - name: 🚀 Run Add-on Lint
         id: addon_lint
         continue-on-error: true
-        uses: frenck/action-addon-linter@be682993f25ab0658cca12fb0445f37683c42ce2
+        uses: frenck/action-addon-linter@928f83d8cd441f2078572eb9bca52bb5738c87b9
         with:
           community: true
           path: "./${{ needs.information.outputs.target }}"
@@ -116,7 +116,7 @@ jobs:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v6
       - name: 🚀 Run YAMLLint
-        uses: frenck/action-yamllint@db6dd8f58270fb7ed4ff087b08548308130a5ad5
+        uses: frenck/action-yamllint@1f3cc87a7a0cecec190178b300f565d784888fc8
 
   lint-prettier:
     name: Prettier
@@ -144,7 +144,7 @@ jobs:
       - name: ⚡ Set up uv
         uses: astral-sh/setup-uv@v7
         with:
-          version: "0.10.8"
+          version: "0.10.9"
       - name: 🧰 Install test dependencies
         run: uv sync --no-dev
       - name: ✅ Run pytest
