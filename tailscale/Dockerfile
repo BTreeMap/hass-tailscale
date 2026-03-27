@@ -22,7 +22,7 @@ ARG NETWORKMANAGER_VERSION="1.54.3-r0"
 ARG NGINX_VERSION="1.28.3-r0"
 
 # renovate: datasource=github-releases depName=tailscale packageName=tailscale/tailscale versioning=loose extractVersion=^v(?<version>.*)$
-ARG TAILSCALE_VERSION="1.96.2"
+ARG TAILSCALE_VERSION="1.96.4"
 
 RUN \
   apk add --no-cache \
