@@ -1,4 +1,4 @@
-FROM ghcr.io/hassio-addons/base:20.1.0
+FROM ghcr.io/hassio-addons/base:20.1.1
 
 # Set shell
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
