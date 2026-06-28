@@ -58,7 +58,7 @@ jobs:
       version: ${{ steps.release.outputs.version }}
     steps:
       - name: ⤵️ Check out code from GitHub
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: 🚀 Run add-on information action
         id: information
         uses: frenck/action-addon-information@74dfadd8ea98f99db15eb45488232c908e667b9c
@@ -103,10 +103,10 @@ jobs:
         architecture: ${{ fromJson(needs.information.outputs.architectures) }}
     steps:
       - name: ⤵️ Check out code from GitHub
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: 🏗 Set up build cache
         id: cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: /tmp/.docker-cache
           key: docker-${{ matrix.architecture }}-${{ github.sha }}

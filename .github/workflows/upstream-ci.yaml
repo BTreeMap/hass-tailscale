@@ -31,7 +31,7 @@ jobs:
       target: ${{ steps.information.outputs.target }}
     steps:
       - name: ⤵️ Check out code from GitHub
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: 🚀 Run add-on information action
         id: information
         uses: frenck/action-addon-information@74dfadd8ea98f99db15eb45488232c908e667b9c
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ⤵️ Check out code from GitHub
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: 🚀 Run Add-on Lint
         id: addon_lint
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ⤵️ Check out code from GitHub
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: 🚀 Run Hadolint
         uses: brpaz/hadolint-action@f49a60108f34b589e16e00be852f810e8ddb2484
         with:
@@ -92,7 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ⤵️ Check out code from GitHub
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: 🚀 Run JQ
         run: |
           shopt -s globstar
@@ -103,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ⤵️ Check out code from GitHub
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: 🚀 Run Shellcheck
         uses: ludeeus/action-shellcheck@00b27aa7cb85167568cb48a3838b75f4265f2bca
         env:
@@ -114,7 +114,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ⤵️ Check out code from GitHub
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: 🚀 Run YAMLLint
         uses: frenck/action-yamllint@db6dd8f58270fb7ed4ff087b08548308130a5ad5
 
@@ -123,7 +123,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ⤵️ Check out code from GitHub
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: 🚀 Run Prettier
         uses: creyD/prettier_action@8c18391fdc98ed0d884c6345f03975edac71b8f0
         with:
@@ -136,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ⤵️ Check out code from GitHub
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: 🐍 Set up Python
         uses: actions/setup-python@v6
         with:
@@ -168,10 +168,10 @@ jobs:
         architecture: ${{ fromJson(needs.information.outputs.architectures) }}
     steps:
       - name: ⤵️ Check out code from GitHub
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: 🏗 Set up build cache
         id: cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: /tmp/.docker-cache
           key: docker-${{ matrix.architecture }}-${{ github.sha }}
