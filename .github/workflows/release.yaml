@@ -3,15 +3,13 @@ name: Release
 
 # yamllint disable-line rule:truthy
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: Version to release (without the v prefix, for example 1.0.11)
-        required: true
-        type: string
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types:
+      - completed
 
 permissions:
-  actions: read
   contents: write
 
 concurrency:
@@ -20,7 +18,11 @@ concurrency:
 
 jobs:
   release:
-    name: Release v${{ inputs.version }}
+    if: |
+      github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.event == 'push'
+      && github.event.workflow_run.head_repository.full_name == github.repository
+    name: Release new version
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -28,25 +30,28 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha }}
 
-      - name: 🔎 Validate release request
+      - name: 🔎 Detect and validate new version
         env:
-          EXPECTED_VERSION: ${{ inputs.version }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
-
-          if [[ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]]; then
-            echo "::error title=Wrong branch::Run this workflow from $DEFAULT_BRANCH."
-            exit 1
-          fi
 
           branch_sha="$(gh api \
             "repos/$GITHUB_REPOSITORY/commits/$DEFAULT_BRANCH" \
             --jq '.sha')"
-          if [[ "$GITHUB_SHA" != "$branch_sha" ]]; then
-            echo "::error title=Stale run::The default branch moved after this release was started. Run it again."
+          if [[ "$RELEASE_SHA" != "$branch_sha" ]]; then
+            message="The default branch moved after this CI run. Its newer CI run will handle the release."
+            echo "::notice title=Stale run::$message"
+            echo "SHOULD_RELEASE=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          if [[ "$(git rev-parse HEAD)" != "$RELEASE_SHA" ]]; then
+            echo "::error title=Wrong commit::The checked-out commit does not match the successful CI run."
             exit 1
           fi
 
@@ -63,24 +68,32 @@ jobs:
           PY
           )"
 
-          if [[ ! "$EXPECTED_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error title=Invalid input::Version must use stable X.Y.Z format without a v prefix."
-            exit 1
-          fi
-          if [[ "$VERSION" != "$EXPECTED_VERSION" ]]; then
-            message="Requested $EXPECTED_VERSION, but tailscale/config.yaml contains $VERSION."
-            echo "::error title=Version mismatch::$message"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error title=Invalid version::Version must use stable X.Y.Z format."
             exit 1
           fi
 
+          previous_version="$(git show HEAD^:tailscale/config.yaml 2>/dev/null \
+            | sed -nE 's/^version:[[:space:]]*([^[:space:]#]+).*$/\1/p')"
           tag="v$VERSION"
           if git show-ref --verify --quiet "refs/tags/$tag"; then
-            echo "::error title=Existing tag::$tag already exists. Bump the version before releasing."
-            exit 1
+            if [[ "$previous_version" != "$VERSION" ]]; then
+              echo "::error title=Duplicate version::$tag already exists; refusing the version change."
+              exit 1
+            fi
+            echo "::notice title=No release needed::$tag already exists."
+            echo "SHOULD_RELEASE=false" >> "$GITHUB_ENV"
+            exit 0
           fi
           if gh release view "$tag" >/dev/null 2>&1; then
-            echo "::error title=Existing release::A release for $tag already exists."
-            exit 1
+            if [[ "$previous_version" != "$VERSION" ]]; then
+              message="A release for $tag already exists; refusing the version change."
+              echo "::error title=Duplicate version::$message"
+              exit 1
+            fi
+            echo "::notice title=No release needed::A release for $tag already exists."
+            echo "SHOULD_RELEASE=false" >> "$GITHUB_ENV"
+            exit 0
           fi
 
           latest_tag="$(python - <<'PY'
@@ -97,7 +110,7 @@ jobs:
           )"
 
           if [[ -n "$latest_tag" ]]; then
-            if ! git merge-base --is-ancestor "$latest_tag" "$GITHUB_SHA"; then
+            if ! git merge-base --is-ancestor "$latest_tag" "$RELEASE_SHA"; then
               echo "::error title=Diverged history::$latest_tag is not an ancestor of the default branch."
               exit 1
             fi
@@ -109,39 +122,37 @@ jobs:
           raise SystemExit(0 if requested > latest else 1)
           PY
             then
-              echo "::error title=Version not newer::$VERSION must be greater than ${latest_tag#v}."
-              exit 1
+              if [[ "$previous_version" != "$VERSION" ]]; then
+                message="$VERSION is not newer than ${latest_tag#v}; refusing the version change."
+                echo "::error title=Version not newer::$message"
+                exit 1
+              fi
+
+              echo "::notice title=No release needed::$VERSION is not newer than ${latest_tag#v}."
+              echo "SHOULD_RELEASE=false" >> "$GITHUB_ENV"
+              exit 0
             fi
           fi
 
-          successful_ci="$(gh run list \
-            --workflow ci.yaml \
-            --commit "$GITHUB_SHA" \
-            --limit 20 \
-            --json conclusion,event \
-            --jq '[.[] | select(.conclusion == "success")] | length')"
-          if [[ "$successful_ci" -eq 0 ]]; then
-            message="Wait for CI to pass on commit $GITHUB_SHA, then run the release again."
-            echo "::error title=CI has not passed::$message"
-            exit 1
-          fi
-
           {
-            echo "## Ready to release"
+            echo "## New version detected"
             echo ""
             echo "- Version: \`$VERSION\`"
             echo "- Tag: \`$tag\`"
-            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Commit: \`$RELEASE_SHA\`"
             echo "- Previous release: \`${latest_tag:-none}\`"
           } >> "$GITHUB_STEP_SUMMARY"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "SHOULD_RELEASE=true" >> "$GITHUB_ENV"
 
       - name: 🚀 Publish latest GitHub release
+        if: env.SHOULD_RELEASE == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           gh release create "v$VERSION" \
-            --target "$GITHUB_SHA" \
+            --target "$RELEASE_SHA" \
             --title "v$VERSION" \
             --generate-notes \
             --latest
