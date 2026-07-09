@@ -25,5 +25,22 @@ Even better: You could submit a pull request with a fix / new feature!
    developers, or if you do not have permission to do that, you may request
    the second reviewer to merge it for you.
 
+## Maintainer release process
+
+Stable releases use `tailscale/config.yaml` as the only version source:
+
+1. Bump its `version` value to the next stable semantic version (`X.Y.Z`) in a
+   pull request and merge it into the default branch.
+1. Wait for the CI workflow on that merge commit to pass.
+1. Open the **Release** workflow in GitHub Actions, choose **Run workflow** from
+   the default branch, and enter that same version without a `v` prefix.
+
+The workflow rejects releases from another branch, stale commits, mismatched or
+invalid versions, versions that are not newer than the highest existing stable
+tag, duplicate tags or releases, divergent tag history, and commits without a
+successful CI run. It then creates `vX.Y.Z`, generates release notes, and marks
+the GitHub release as latest. Publishing the release starts the existing Deploy
+workflow, which builds and publishes the versioned and `stable` container images.
+
 [github]: https://github.com/BTreeMap/hass-tailscale/issues
 [prs]: https://github.com/BTreeMap/hass-tailscale/pulls

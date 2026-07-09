@@ -1,0 +1,150 @@
+---
+name: Release
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release (without the v prefix, for example 1.0.11)
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Release v${{ inputs.version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: ⤵️ Check out the default branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: 🔎 Validate release request
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]]; then
+            echo "::error title=Wrong branch::Run this workflow from $DEFAULT_BRANCH."
+            exit 1
+          fi
+
+          branch_sha="$(gh api \
+            "repos/$GITHUB_REPOSITORY/commits/$DEFAULT_BRANCH" \
+            --jq '.sha')"
+          if [[ "$GITHUB_SHA" != "$branch_sha" ]]; then
+            echo "::error title=Stale run::The default branch moved after this release was started. Run it again."
+            exit 1
+          fi
+
+          VERSION="$(python - <<'PY'
+          import re
+          from pathlib import Path
+
+          text = Path("tailscale/config.yaml").read_text()
+          matches = re.findall(r"^version:\s*([^\s#]+)\s*(?:#.*)?$", text, re.MULTILINE)
+          if len(matches) != 1:
+              message = "Expected exactly one top-level version in tailscale/config.yaml."
+              raise SystemExit(f"::error title=Invalid config::{message}")
+          print(matches[0])
+          PY
+          )"
+
+          if [[ ! "$EXPECTED_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error title=Invalid input::Version must use stable X.Y.Z format without a v prefix."
+            exit 1
+          fi
+          if [[ "$VERSION" != "$EXPECTED_VERSION" ]]; then
+            message="Requested $EXPECTED_VERSION, but tailscale/config.yaml contains $VERSION."
+            echo "::error title=Version mismatch::$message"
+            exit 1
+          fi
+
+          tag="v$VERSION"
+          if git show-ref --verify --quiet "refs/tags/$tag"; then
+            echo "::error title=Existing tag::$tag already exists. Bump the version before releasing."
+            exit 1
+          fi
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "::error title=Existing release::A release for $tag already exists."
+            exit 1
+          fi
+
+          latest_tag="$(python - <<'PY'
+          import re
+          import subprocess
+
+          versions = []
+          for tag in subprocess.check_output(["git", "tag", "--list"], text=True).splitlines():
+              match = re.fullmatch(r"v(\d+)\.(\d+)\.(\d+)", tag)
+              if match:
+                  versions.append((tuple(map(int, match.groups())), tag))
+          print(max(versions)[1] if versions else "")
+          PY
+          )"
+
+          if [[ -n "$latest_tag" ]]; then
+            if ! git merge-base --is-ancestor "$latest_tag" "$GITHUB_SHA"; then
+              echo "::error title=Diverged history::$latest_tag is not an ancestor of the default branch."
+              exit 1
+            fi
+            if ! python - "$VERSION" "${latest_tag#v}" <<'PY'
+          import sys
+
+          requested = tuple(map(int, sys.argv[1].split(".")))
+          latest = tuple(map(int, sys.argv[2].split(".")))
+          raise SystemExit(0 if requested > latest else 1)
+          PY
+            then
+              echo "::error title=Version not newer::$VERSION must be greater than ${latest_tag#v}."
+              exit 1
+            fi
+          fi
+
+          successful_ci="$(gh run list \
+            --workflow ci.yaml \
+            --commit "$GITHUB_SHA" \
+            --limit 20 \
+            --json conclusion,event \
+            --jq '[.[] | select(.conclusion == "success")] | length')"
+          if [[ "$successful_ci" -eq 0 ]]; then
+            message="Wait for CI to pass on commit $GITHUB_SHA, then run the release again."
+            echo "::error title=CI has not passed::$message"
+            exit 1
+          fi
+
+          {
+            echo "## Ready to release"
+            echo ""
+            echo "- Version: \`$VERSION\`"
+            echo "- Tag: \`$tag\`"
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Previous release: \`${latest_tag:-none}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: 🚀 Publish latest GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v$VERSION" \
+            --target "$GITHUB_SHA" \
+            --title "v$VERSION" \
+            --generate-notes \
+            --latest
+
+          echo "Released [v$VERSION]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/v$VERSION)." \
+            >> "$GITHUB_STEP_SUMMARY"
