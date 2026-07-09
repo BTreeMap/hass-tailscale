@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 concurrency:
   group: release-${{ github.repository }}
@@ -25,6 +26,9 @@ jobs:
     name: Release new version
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      should_deploy: ${{ steps.detect.outputs.should_deploy }}
+      version: ${{ steps.detect.outputs.version }}
     steps:
       - name: ⤵️ Check out the default branch
         uses: actions/checkout@v7
@@ -33,6 +37,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: 🔎 Detect and validate new version
+        id: detect
         env:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -46,7 +51,7 @@ jobs:
           if [[ "$RELEASE_SHA" != "$branch_sha" ]]; then
             message="The default branch moved after this CI run. Its newer CI run will handle the release."
             echo "::notice title=Stale run::$message"
-            echo "SHOULD_RELEASE=false" >> "$GITHUB_ENV"
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -75,14 +80,26 @@ jobs:
 
           previous_version="$(git show HEAD^:tailscale/config.yaml 2>/dev/null \
             | sed -nE 's/^version:[[:space:]]*([^[:space:]#]+).*$/\1/p')"
+          registry_owner="${GITHUB_REPOSITORY_OWNER,,}"
+          stable_image="ghcr.io/$registry_owner/tailscale/amd64:stable"
+          stable_version="$(docker buildx imagetools inspect "$stable_image" \
+            --format '{{json .Image.Config.Labels}}' 2>/dev/null \
+            | jq -r '."io.hass.version" // empty' || true)"
           tag="v$VERSION"
           if git show-ref --verify --quiet "refs/tags/$tag"; then
             if [[ "$previous_version" != "$VERSION" ]]; then
               echo "::error title=Duplicate version::$tag already exists; refusing the version change."
               exit 1
             fi
+            if [[ "$stable_version" != "$VERSION" ]]; then
+              message="$tag exists, but the stable image is ${stable_version:-missing}; repairing it."
+              echo "::notice title=Stable deployment needed::$message"
+              echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+              echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
             echo "::notice title=No release needed::$tag already exists."
-            echo "SHOULD_RELEASE=false" >> "$GITHUB_ENV"
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           if gh release view "$tag" >/dev/null 2>&1; then
@@ -92,7 +109,7 @@ jobs:
               exit 1
             fi
             echo "::notice title=No release needed::A release for $tag already exists."
-            echo "SHOULD_RELEASE=false" >> "$GITHUB_ENV"
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -129,7 +146,7 @@ jobs:
               fi
 
               echo "::notice title=No release needed::$VERSION is not newer than ${latest_tag#v}."
-              echo "SHOULD_RELEASE=false" >> "$GITHUB_ENV"
+              echo "should_deploy=false" >> "$GITHUB_OUTPUT"
               exit 0
             fi
           fi
@@ -144,6 +161,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "SHOULD_RELEASE=true" >> "$GITHUB_ENV"
+          echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: 🚀 Publish latest GitHub release
         if: env.SHOULD_RELEASE == 'true'
@@ -159,3 +178,14 @@ jobs:
 
           echo "Released [v$VERSION]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/v$VERSION)." \
             >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-stable:
+    name: Deploy stable images
+    needs: release
+    if: needs.release.outputs.should_deploy == 'true'
+    uses: ./.github/workflows/upstream-deploy.yaml
+    with:
+      environment: stable
+      version: ${{ needs.release.outputs.version }}
+    secrets:
+      DISPATCH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}

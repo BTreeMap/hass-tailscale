@@ -27,6 +27,14 @@ on:
         description: The name of the beta repository
         required: false
         type: string
+      environment:
+        description: Overrides the detected deployment environment
+        required: false
+        type: string
+      version:
+        description: Overrides the detected image version
+        required: false
+        type: string
     secrets:
       DISPATCH_TOKEN:
         required: true
@@ -79,7 +87,10 @@ jobs:
           sha="${{ github.sha }}"
           environment="edge"
           version="${sha:0:7}"
-          if [[ "${{ github.event_name }}" = "release" ]]; then
+          if [[ -n "${{ inputs.version }}" ]]; then
+            version="${{ inputs.version }}"
+            environment="${{ inputs.environment }}"
+          elif [[ "${{ github.event_name }}" = "release" ]]; then
             version="${{ github.event.release.tag_name }}"
             version="${version,,}"
             version="${version#v}"

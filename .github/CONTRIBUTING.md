@@ -35,8 +35,13 @@ Stable releases use `tailscale/config.yaml` as the only version source:
 No separate release operation is needed. After CI passes on the resulting `main`
 commit, the Release workflow detects that the configured version is newer than
 the highest stable tag. It creates `vX.Y.Z`, generates release notes, and marks
-the GitHub release as latest. Publishing the release starts the existing Deploy
-workflow, which builds and publishes the versioned and `stable` container images.
+the GitHub release as latest, then builds and publishes the versioned and
+`stable` container images.
+
+The stable deployment is invoked directly by the Release workflow. This avoids
+GitHub's security rule that prevents a release created with `GITHUB_TOKEN` from
+triggering another workflow. The workflow also repairs a missing or stale
+`stable` image when the corresponding release already exists.
 
 The workflow ignores ordinary commits and versions that are already released.
 It rejects invalid or non-increasing version changes and divergent tag history,
