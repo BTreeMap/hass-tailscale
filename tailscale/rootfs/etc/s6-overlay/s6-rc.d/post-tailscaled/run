@@ -17,12 +17,8 @@ declare keyexpiry
 # Default options
 options+=(--hostname "$(bashio::info.hostname)")
 
-# Accept magicDNS when explicitly enabled
-if bashio::config.true "accept_dns"; then
-  options+=(--accept-dns)
-else
-  options+=(--accept-dns=false)
-fi
+# Keep tailnet DNS settings isolated from Home Assistant and this app.
+options+=(--accept-dns=false)
 
 # Accept routes when explicitly enabled
 if bashio::config.true "accept_routes"; then

@@ -6,12 +6,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Setup base
 ARG BUILD_ARCH=amd64
 
-# renovate: datasource=repology depName=bind-tools packageName=alpine_3_24/bind-tools versioning=loose
-ARG BIND_TOOLS_VERSION="9.20.24-r0"
 # renovate: datasource=repology depName=coreutils packageName=alpine_3_24/coreutils versioning=loose
 ARG COREUTILS_VERSION="9.11-r0"
-# renovate: datasource=repology depName=dnsmasq packageName=alpine_3_24/dnsmasq versioning=loose
-ARG DNSMASQ_VERSION="2.92_p2-r0"
 # renovate: datasource=repology depName=ethtool packageName=alpine_3_24/ethtool versioning=loose
 ARG ETHTOOL_VERSION="7.0-r0"
 # renovate: datasource=repology depName=ipcalc packageName=alpine_3_24/ipcalc versioning=loose
@@ -30,9 +26,7 @@ ARG TAILSCALE_VERSION="1.98.8"
 
 RUN \
     apk add --no-cache \
-        bind-tools="${BIND_TOOLS_VERSION}" \
         coreutils="${COREUTILS_VERSION}" \
-        dnsmasq="${DNSMASQ_VERSION}" \
         ethtool="${ETHTOOL_VERSION}" \
         ipcalc="${IPCALC_VERSION}" \
         iproute2="${IPROUTE2_VERSION}" \

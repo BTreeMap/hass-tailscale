@@ -39,9 +39,4 @@ profile tailscale flags=(attach_disconnected,mediate_deleted) {
   # General - based on Config.yaml
   capability net_admin,
   capability net_raw,
-
-  # Mount for MagicDNS fix
-  capability sys_admin,
-  mount options=(rw, rprivate) -> /, # unshare -m
-  mount options=(rw, bind) /etc/resolv.for-tailscaled.conf -> /etc/resolv.conf, # mount --bind
 }

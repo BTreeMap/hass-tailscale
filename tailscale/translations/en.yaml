@@ -1,11 +1,5 @@
 ---
 configuration:
-  accept_dns:
-    name: Accept DNS
-    description: >-
-      This option allows you to accept DNS settings of your tailnet that are
-      configured on the DNS page of the admin console.
-      This option is enabled by default.
   accept_routes:
     name: Accept routes
     description: >-

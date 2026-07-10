@@ -57,7 +57,6 @@ Consider disabling key expiry to avoid losing connection to your Home Assistant
 device. See [Key expiry][tailscale_info_key_expiry] for more information.
 
 ```yaml
-accept_dns: true
 accept_routes: true
 advertise_exit_node: true
 advertise_connector: true
@@ -86,17 +85,11 @@ userspace_networking: true
 > change them through the Web UI, because all the changes made there would be
 > lost when the add-on is restarted.
 
-### Option: `accept_dns`
-
-If you are experiencing trouble with MagicDNS on this device and wish to
-disable, you can do so using this option.
-
-When not set, this option is enabled by default.
-
-MagicDNS may cause issues if you run things like Pi-hole or AdGuard Home
-on the same machine as this add-on. In such cases disabling `accept_dns`
-will help. You can still leverage MagicDNS on other devices on your network,
-by adding `100.100.100.100` as a DNS server in your Pi-hole or AdGuard Home.
+> [!IMPORTANT]
+> The app always rejects DNS configuration distributed by the tailnet. It does
+> not expose MagicDNS to Home Assistant or alter Home Assistant's DNS settings.
+> This keeps DNS resolution isolated between apps and avoids requiring a DNS
+> proxy or elevated mount privileges.
 
 ### Option: `accept_routes`
 
@@ -270,6 +263,9 @@ More information: [Enabling HTTPS][tailscale_info_https],
    - Choose a tailnet name.
 
    - Enable MagicDNS if not already enabled.
+
+     This enables the tailnet DNS name required for Tailscale HTTPS
+     certificates; the app does not import MagicDNS into Home Assistant.
 
    - Under HTTPS Certificates section, click Enable HTTPS.
 

@@ -7,6 +7,9 @@ from scripts.addon_info import load_addon_info
 
 CONFIG_PATH = Path(__file__).parents[1] / "tailscale" / "config.yaml"
 ROOTFS_PATH = CONFIG_PATH.parent / "rootfs"
+DOCKERFILE_PATH = CONFIG_PATH.parent / "Dockerfile"
+APPARMOR_PATH = CONFIG_PATH.parent / "apparmor.txt"
+POST_TAILSCALED_PATH = ROOTFS_PATH / "etc/s6-overlay/s6-rc.d/post-tailscaled/run"
 
 
 def test_repository_addon_configuration() -> None:
@@ -27,6 +30,35 @@ def test_runtime_uses_current_bashio_app_api() -> None:
     ]
 
     assert deprecated_references == []
+
+
+def test_runtime_permanently_rejects_tailnet_dns_configuration() -> None:
+    config = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
+    dockerfile = DOCKERFILE_PATH.read_text(encoding="utf-8")
+    apparmor = APPARMOR_PATH.read_text(encoding="utf-8")
+    post_tailscaled = POST_TAILSCALED_PATH.read_text(encoding="utf-8")
+    rootfs_files = tuple(path for path in ROOTFS_PATH.rglob("*") if path.is_file())
+    rootfs_contents = tuple(
+        path.read_text(encoding="utf-8", errors="strict").lower()
+        for path in rootfs_files
+    )
+
+    assert "accept_dns" not in config["options"]
+    assert "accept_dns" not in config["schema"]
+    assert "SYS_ADMIN" not in config["privileged"]
+    assert "--accept-dns=false" in post_tailscaled
+    assert "accept_dns" not in post_tailscaled
+    assert "dnsmasq" not in dockerfile
+    assert "bind-tools" not in dockerfile
+    assert "sys_admin" not in apparmor
+    assert all(
+        "magicdns" not in path.relative_to(ROOTFS_PATH).as_posix().lower()
+        for path in rootfs_files
+    )
+    assert all(
+        "magicdns" not in content and "dnsmasq" not in content
+        for content in rootfs_contents
+    )
 
 
 @pytest.mark.parametrize(
