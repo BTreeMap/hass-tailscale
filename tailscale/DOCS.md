@@ -57,6 +57,7 @@ Consider disabling key expiry to avoid losing connection to your Home Assistant
 device. See [Key expiry][tailscale_info_key_expiry] for more information.
 
 ```yaml
+accept_dns: false
 accept_routes: true
 advertise_exit_node: true
 advertise_connector: true
@@ -90,6 +91,12 @@ userspace_networking: true
 > not expose MagicDNS to Home Assistant or alter Home Assistant's DNS settings.
 > This keeps DNS resolution isolated between apps and avoids requiring a DNS
 > proxy or elevated mount privileges.
+
+### Option: `accept_dns`
+
+This compatibility placeholder is retained so existing configurations remain
+valid. Its value is ignored: the app always invokes Tailscale with
+`--accept-dns=false`. Changing it to `true` does not enable tailnet DNS.
 
 ### Option: `accept_routes`
 

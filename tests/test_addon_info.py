@@ -43,8 +43,8 @@ def test_runtime_permanently_rejects_tailnet_dns_configuration() -> None:
         for path in rootfs_files
     )
 
-    assert "accept_dns" not in config["options"]
-    assert "accept_dns" not in config["schema"]
+    assert config["options"]["accept_dns"] is False
+    assert config["schema"]["accept_dns"] == "bool"
     assert "SYS_ADMIN" not in config["privileged"]
     assert "--accept-dns=false" in post_tailscaled
     assert "accept_dns" not in post_tailscaled

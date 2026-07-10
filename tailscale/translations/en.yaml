@@ -1,5 +1,11 @@
 ---
 configuration:
+  accept_dns:
+    name: Accept DNS (disabled)
+    description: >-
+      Compatibility placeholder for existing configurations. This value is
+      ignored; tailnet DNS settings are always rejected to keep DNS isolated
+      from Home Assistant.
   accept_routes:
     name: Accept routes
     description: >-
