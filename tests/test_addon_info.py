@@ -6,7 +6,7 @@ import yaml
 from scripts.addon_info import load_addon_info
 
 CONFIG_PATH = Path(__file__).parents[1] / "tailscale" / "config.yaml"
-STAGE2_HOOK_PATH = CONFIG_PATH.parent / "rootfs/etc/s6-overlay/scripts/stage2_hook.sh"
+ROOTFS_PATH = CONFIG_PATH.parent / "rootfs"
 
 
 def test_repository_addon_configuration() -> None:
@@ -18,11 +18,15 @@ def test_repository_addon_configuration() -> None:
     assert info.as_outputs()["architectures"] == '["aarch64","amd64"]'
 
 
-def test_stage2_hook_does_not_call_deprecated_option_api() -> None:
-    hook = STAGE2_HOOK_PATH.read_text(encoding="utf-8")
+def test_runtime_uses_current_bashio_app_api() -> None:
+    deprecated_references = [
+        path.relative_to(ROOTFS_PATH)
+        for path in ROOTFS_PATH.rglob("*")
+        if path.is_file()
+        and "bashio::addon." in path.read_text(encoding="utf-8", errors="strict")
+    ]
 
-    assert "bashio::addon.options" not in hook
-    assert "bashio::addon.option " not in hook
+    assert deprecated_references == []
 
 
 @pytest.mark.parametrize(

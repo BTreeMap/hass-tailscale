@@ -6,10 +6,9 @@ if [[ -z "${BASHIO_DIR:-}" ]]; then
   exit 1
 fi
 
-# shellcheck source=/dev/null
 source "${BASHIO_DIR}/lib/bashio.sh"
 
-function bashio::addon.config() {
+function bashio::app.config() {
   cat "${BASHIO_CONFIG_JSON}"
 }
 
