@@ -4,6 +4,11 @@ version = "0.0.0"
 description = "Test dependencies for hass-tailscale"
 requires-python = ">=3.12"
 dependencies = [
+  "pyyaml==6.0.3",
   "pytest==9.1.1",
+  "yamllint==1.38.0",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
 

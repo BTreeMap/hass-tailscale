@@ -14,6 +14,111 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  workflows:
-    uses: ./.github/workflows/upstream-ci.yaml
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    outputs:
+      architectures: ${{ steps.information.outputs.architectures }}
+      description: ${{ steps.information.outputs.description }}
+      name: ${{ steps.information.outputs.name }}
+      registry_owner: ${{ steps.registry_owner.outputs.registry_owner }}
+      slug: ${{ steps.information.outputs.slug }}
+      target: ${{ steps.information.outputs.target }}
+    steps:
+      - name: ⤵️ Check out code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: ⚡ Set up uv
+        uses: astral-sh/setup-uv@v8.3.2
+        with:
+          cache-dependency-glob: uv.lock
+          enable-cache: true
+          version: "0.11.28"
+
+      - name: 🧰 Install locked dependencies
+        run: uv sync --locked --no-dev
+
+      - name: ℹ️ Validate add-on information
+        id: information
+        run: uv run scripts/addon_info.py tailscale/config.yaml --github-output "$GITHUB_OUTPUT"
+
+      - name: 🔡 Normalize registry owner
+        id: registry_owner
+        run: echo "registry_owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - name: 🧹 Lint YAML
+        run: git ls-files -z '*.yaml' '*.yml' '.yamllint' | xargs -0 uv run yamllint
+
+      - name: 🧹 Lint JSON
+        run: git ls-files -z '*.json' | xargs -0 -r -n1 jq empty
+
+      - name: 🎨 Check formatting
+        run: |
+          mapfile -d '' files < <(git ls-files -z '*.json' '*.js' '*.md' '*.yaml')
+          npx --yes prettier@3.8.1 --check "${files[@]}"
+
+      - name: ✅ Run tests
+        run: uv run pytest
+
+  build:
+    name: Build ${{ matrix.architecture }}
+    needs: quality
+    # yamllint disable rule:line-length
+    runs-on: ${{ matrix.architecture == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    # yamllint enable rule:line-length
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: ${{ fromJSON(needs.quality.outputs.architectures) }}
+    steps:
+      - name: ⤵️ Check out code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: 🏗 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: ℹ️ Compose build metadata
+        id: metadata
+        run: |
+          echo "date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+          if [[ "${{ matrix.architecture }}" == "amd64" ]]; then
+            echo "platform=linux/amd64" >> "$GITHUB_OUTPUT"
+          else
+            echo "platform=linux/arm64/v8" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 🚀 Build
+        uses: docker/build-push-action@v7
+        with:
+          build-args: |
+            BUILD_ARCH=${{ matrix.architecture }}
+            BUILD_DATE=${{ steps.metadata.outputs.date }}
+            BUILD_DESCRIPTION=${{ needs.quality.outputs.description }}
+            BUILD_NAME=${{ needs.quality.outputs.name }}
+            BUILD_REF=${{ github.sha }}
+            BUILD_REPOSITORY=${{ github.repository }}
+            BUILD_VERSION=edge
+          # yamllint disable rule:line-length
+          cache-from: |
+            type=gha,scope=${{ matrix.architecture }}
+            ghcr.io/${{ needs.quality.outputs.registry_owner }}/${{ needs.quality.outputs.slug }}/${{ matrix.architecture }}:edge
+          # yamllint enable rule:line-length
+          cache-to: type=gha,mode=max,scope=${{ matrix.architecture }}
+          context: ${{ needs.quality.outputs.target }}
+          file: ${{ needs.quality.outputs.target }}/Dockerfile
+          platforms: ${{ steps.metadata.outputs.platform }}
+          push: false
