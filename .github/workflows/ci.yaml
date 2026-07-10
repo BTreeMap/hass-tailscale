@@ -64,6 +64,11 @@ jobs:
       - name: 🧹 Lint JSON
         run: git ls-files -z '*.json' | xargs -0 -r -n1 jq empty
 
+      - name: 🐍 Check Python quality
+        run: |
+          uv run ruff format --check scripts tests
+          uv run ruff check scripts tests
+
       - name: 🎨 Check formatting
         run: |
           mapfile -d '' files < <(git ls-files -z '*.json' '*.js' '*.md' '*.yaml')
