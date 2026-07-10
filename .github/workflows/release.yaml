@@ -182,6 +182,7 @@ jobs:
     steps:
       - name: 🚀 Publish latest GitHub release
         env:
+          GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
           VERSION: ${{ needs.detect.outputs.version }}
