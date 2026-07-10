@@ -48,5 +48,17 @@ It rejects invalid or non-increasing version changes and divergent tag history,
 and it skips stale CI runs so only the current tip of the default branch can be
 released.
 
+## Workflow security policy
+
+- Actions maintained under `actions/`, `docker/`, and `astral-sh/` are trusted
+  and use explicit version tags. Actions from other publishers must be pinned to
+  a full commit SHA.
+- Workflows and jobs receive only the GitHub token permissions they require.
+  Release detection is read-only; only release publication receives
+  `contents: write`, and only image publishing receives `packages: write`.
+- Checkouts must use `persist-credentials: false`. CI checks report formatting
+  failures but never modify or push repository content.
+- Unused secrets must not be passed to reusable workflows.
+
 [github]: https://github.com/BTreeMap/hass-tailscale/issues
 [prs]: https://github.com/BTreeMap/hass-tailscale/pulls

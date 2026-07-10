@@ -35,13 +35,8 @@ on:
         description: Overrides the detected image version
         required: false
         type: string
-    secrets:
-      DISPATCH_TOKEN:
-        required: true
-
 permissions:
   contents: read
-  packages: write
 
 jobs:
   information:
@@ -50,8 +45,12 @@ jobs:
       || (
         github.event_name == 'workflow_run'
         && github.event.workflow_run.conclusion == 'success'
+        && github.event.workflow_run.event == 'push'
+        && github.event.workflow_run.head_repository.full_name == github.repository
       )
     name: ℹ️ Gather add-on information
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     outputs:
       architectures: ${{ steps.information.outputs.architectures }}
@@ -67,6 +66,8 @@ jobs:
     steps:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: 🚀 Run add-on information action
         id: information
         uses: frenck/action-addon-information@74dfadd8ea98f99db15eb45488232c908e667b9c
@@ -106,6 +107,9 @@ jobs:
   deploy:
     name: 👷 Build & Deploy ${{ matrix.architecture }}
     needs: information
+    permissions:
+      contents: read
+      packages: write
     # yamllint disable rule:line-length
     runs-on: ${{ contains(fromJson('["aarch64"]'), matrix.architecture) && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     # yamllint enable rule:line-length
@@ -115,6 +119,8 @@ jobs:
     steps:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: 🏗 Set up build cache
         id: cache
         uses: actions/cache@v6
@@ -140,12 +146,6 @@ jobs:
             echo "::error ::Could not determine platform for architecture ${{ matrix.architecture }}"
             exit 1
           fi
-      - name: 🏗  Login to GitHub Container Registry
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       - name: 🚀 Build
         uses: docker/build-push-action@v7
         with:
@@ -180,6 +180,12 @@ jobs:
         run: |
           rm -rf /tmp/.docker-cache
           mv /tmp/.docker-cache-new /tmp/.docker-cache
+      - name: 🏗 Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: 🚀 Push
         # yamllint disable rule:line-length
         run: |
@@ -193,6 +199,8 @@ jobs:
     needs:
       - information
       - deploy
+    permissions:
+      packages: write
     runs-on: ubuntu-latest
     steps:
       - name: 🏗️  Login to GitHub Container Registry

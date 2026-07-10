@@ -11,7 +11,7 @@ on:
         type: string
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -32,6 +32,8 @@ jobs:
     steps:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: 🚀 Run add-on information action
         id: information
         uses: frenck/action-addon-information@74dfadd8ea98f99db15eb45488232c908e667b9c
@@ -55,6 +57,8 @@ jobs:
     steps:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: 🚀 Run Add-on Lint
         id: addon_lint
@@ -82,6 +86,8 @@ jobs:
     steps:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: 🚀 Run Hadolint
         uses: brpaz/hadolint-action@f49a60108f34b589e16e00be852f810e8ddb2484
         with:
@@ -93,6 +99,8 @@ jobs:
     steps:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: 🚀 Run JQ
         run: |
           shopt -s globstar
@@ -104,6 +112,8 @@ jobs:
     steps:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: 🚀 Run Shellcheck
         uses: ludeeus/action-shellcheck@00b27aa7cb85167568cb48a3838b75f4265f2bca
         env:
@@ -115,6 +125,8 @@ jobs:
     steps:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: 🚀 Run YAMLLint
         uses: frenck/action-yamllint@db6dd8f58270fb7ed4ff087b08548308130a5ad5
 
@@ -124,12 +136,10 @@ jobs:
     steps:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v7
-      - name: 🚀 Run Prettier
-        uses: creyD/prettier_action@8c18391fdc98ed0d884c6345f03975edac71b8f0
         with:
-          prettier_options: --write **/*.{json,js,md,yaml}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
+      - name: 🚀 Run Prettier
+        run: npx --yes prettier@3.8.1 --check '**/*.{json,js,md,yaml}'
 
   test-pytest:
     name: Pytest
@@ -137,6 +147,8 @@ jobs:
     steps:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: 🐍 Set up Python
         uses: actions/setup-python@v6
         with:
@@ -169,6 +181,8 @@ jobs:
     steps:
       - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: 🏗 Set up build cache
         id: cache
         uses: actions/cache@v6
