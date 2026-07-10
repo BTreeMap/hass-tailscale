@@ -1,4 +1,4 @@
-FROM ghcr.io/hassio-addons/base:20.2.0
+FROM ghcr.io/hassio-addons/base:21.0.0
 
 # Set shell
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -6,44 +6,52 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Setup base
 ARG BUILD_ARCH=amd64
 
-# renovate: datasource=repology depName=coreutils packageName=alpine_3_23/coreutils versioning=loose
-ARG COREUTILS_VERSION="9.8-r1"
-# renovate: datasource=repology depName=ethtool packageName=alpine_3_23/ethtool versioning=loose
-ARG ETHTOOL_VERSION="6.15-r0"
-# renovate: datasource=repology depName=ipcalc packageName=alpine_3_23/ipcalc versioning=loose
+# renovate: datasource=repology depName=bind-tools packageName=alpine_3_24/bind-tools versioning=loose
+ARG BIND_TOOLS_VERSION="9.20.24-r0"
+# renovate: datasource=repology depName=coreutils packageName=alpine_3_24/coreutils versioning=loose
+ARG COREUTILS_VERSION="9.11-r0"
+# renovate: datasource=repology depName=dnsmasq packageName=alpine_3_24/dnsmasq versioning=loose
+ARG DNSMASQ_VERSION="2.92_p2-r0"
+# renovate: datasource=repology depName=ethtool packageName=alpine_3_24/ethtool versioning=loose
+ARG ETHTOOL_VERSION="7.0-r0"
+# renovate: datasource=repology depName=ipcalc packageName=alpine_3_24/ipcalc versioning=loose
 ARG IPCALC_VERSION="1.0.3-r1"
-# renovate: datasource=repology depName=iproute2 packageName=alpine_3_23/iproute2 versioning=loose
-ARG IPROUTE2_VERSION="6.17.0-r0"
-# renovate: datasource=repology depName=iptables packageName=alpine_3_23/iptables versioning=loose
-ARG IPTABLES_VERSION="1.8.11-r1"
-# renovate: datasource=repology depName=networkmanager packageName=alpine_3_23/networkmanager versioning=loose
-ARG NETWORKMANAGER_VERSION="1.54.3-r0"
-# renovate: datasource=repology depName=nginx packageName=alpine_3_23/nginx versioning=loose
-ARG NGINX_VERSION="1.28.3-r4"
+# renovate: datasource=repology depName=iproute2 packageName=alpine_3_24/iproute2 versioning=loose
+ARG IPROUTE2_VERSION="7.0.0-r0"
+# renovate: datasource=repology depName=iptables packageName=alpine_3_24/iptables versioning=loose
+ARG IPTABLES_VERSION="1.8.13-r0"
+# renovate: datasource=repology depName=networkmanager packageName=alpine_3_24/networkmanager versioning=loose
+ARG NETWORKMANAGER_VERSION="1.52.2-r0"
+# renovate: datasource=repology depName=nginx packageName=alpine_3_24/nginx versioning=loose
+ARG NGINX_VERSION="1.30.3-r0"
 
 # renovate: datasource=github-releases depName=tailscale packageName=tailscale/tailscale versioning=loose extractVersion=^v(?<version>.*)$
 ARG TAILSCALE_VERSION="1.98.8"
 
 RUN \
-  apk add --no-cache \
-    coreutils="${COREUTILS_VERSION}" \
-    ethtool="${ETHTOOL_VERSION}" \
-    ipcalc="${IPCALC_VERSION}" \
-    iproute2="${IPROUTE2_VERSION}" \
-    iptables="${IPTABLES_VERSION}" \
-    networkmanager="${NETWORKMANAGER_VERSION}" \
-    nginx="${NGINX_VERSION}" \
-  && ln -sf /sbin/xtables-nft-multi /sbin/ip6tables \
-  && ln -sf /sbin/xtables-nft-multi /sbin/iptables \
-  && case "${BUILD_ARCH}" in \
-       aarch64) ARCH="arm64" ;; \
-       amd64)   ARCH="amd64" ;; \
-       *) echo "Unsupported BUILD_ARCH=${BUILD_ARCH}" >&2; exit 1 ;; \
-     esac \
-  && curl -fsSL "https://pkgs.tailscale.com/stable/tailscale_${TAILSCALE_VERSION}_${ARCH}.tgz" \
-     | tar zxvf - -C /opt/ --strip-components 1 \
-  && rm -rf \
-    /opt/systemd
+    apk add --no-cache \
+        bind-tools="${BIND_TOOLS_VERSION}" \
+        coreutils="${COREUTILS_VERSION}" \
+        dnsmasq="${DNSMASQ_VERSION}" \
+        ethtool="${ETHTOOL_VERSION}" \
+        ipcalc="${IPCALC_VERSION}" \
+        iproute2="${IPROUTE2_VERSION}" \
+        iptables="${IPTABLES_VERSION}" \
+        networkmanager="${NETWORKMANAGER_VERSION}" \
+        nginx="${NGINX_VERSION}" \
+    && ln -sf /sbin/xtables-nft-multi /sbin/ip6tables \
+    && ln -sf /sbin/xtables-nft-multi /sbin/iptables \
+    && rm -rf \
+        /usr/lib/NetworkManager/dispatcher.d \
+    && case "${BUILD_ARCH}" in \
+             aarch64) ARCH="arm64" ;; \
+             amd64)   ARCH="amd64" ;; \
+             *) echo "Unsupported BUILD_ARCH=${BUILD_ARCH}" >&2; exit 1 ;; \
+         esac \
+    && curl -fsSL "https://pkgs.tailscale.com/stable/tailscale_${TAILSCALE_VERSION}_${ARCH}.tgz" \
+         | tar zxvf - -C /opt/ --strip-components 1 \
+    && rm -rf \
+        /opt/systemd
 
 # Copy root filesystem
 COPY rootfs /
@@ -65,20 +73,20 @@ ARG BUILD_VERSION
 
 # Labels
 LABEL \
-  io.hass.name="${BUILD_NAME}" \
-  io.hass.description="${BUILD_DESCRIPTION}" \
-  io.hass.arch="${BUILD_ARCH}" \
-  io.hass.type="addon" \
-  io.hass.version=${BUILD_VERSION} \
-  maintainer="Joe Fang <hass-tailscale@oss.joefang.org>" \
-  org.opencontainers.image.title="${BUILD_NAME}" \
-  org.opencontainers.image.description="${BUILD_DESCRIPTION}" \
-  org.opencontainers.image.vendor="BTreeMap" \
-  org.opencontainers.image.authors="Joe Fang <hass-tailscale@oss.joefang.org>" \
-  org.opencontainers.image.licenses="MIT" \
-  org.opencontainers.image.url="https://github.com/BTreeMap/hass-tailscale" \
-  org.opencontainers.image.source="https://github.com/${BUILD_REPOSITORY}" \
-  org.opencontainers.image.documentation="https://github.com/${BUILD_REPOSITORY}/blob/main/README.md" \
-  org.opencontainers.image.created=${BUILD_DATE} \
-  org.opencontainers.image.revision=${BUILD_REF} \
-  org.opencontainers.image.version=${BUILD_VERSION}
+    io.hass.name="${BUILD_NAME}" \
+    io.hass.description="${BUILD_DESCRIPTION}" \
+    io.hass.arch="${BUILD_ARCH}" \
+    io.hass.type="addon" \
+    io.hass.version=${BUILD_VERSION} \
+    maintainer="Joe Fang <hass-tailscale@oss.joefang.org>" \
+    org.opencontainers.image.title="${BUILD_NAME}" \
+    org.opencontainers.image.description="${BUILD_DESCRIPTION}" \
+    org.opencontainers.image.vendor="BTreeMap" \
+    org.opencontainers.image.authors="Joe Fang <hass-tailscale@oss.joefang.org>" \
+    org.opencontainers.image.licenses="MIT" \
+    org.opencontainers.image.url="https://github.com/BTreeMap/hass-tailscale" \
+    org.opencontainers.image.source="https://github.com/${BUILD_REPOSITORY}" \
+    org.opencontainers.image.documentation="https://github.com/${BUILD_REPOSITORY}/blob/main/README.md" \
+    org.opencontainers.image.created=${BUILD_DATE} \
+    org.opencontainers.image.revision=${BUILD_REF} \
+    org.opencontainers.image.version=${BUILD_VERSION}
