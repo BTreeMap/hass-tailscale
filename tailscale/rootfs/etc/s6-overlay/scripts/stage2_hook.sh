@@ -6,13 +6,6 @@ export LOG_FD
 # S6 Overlay stage2 hook to customize services
 # ==============================================================================
 
-# Disable protect-subnets service when userspace-networking is enabled or accepting routes is disabled
-if bashio::config.true "userspace_networking" || \
-    bashio::config.false "accept_routes";
-then
-    rm /etc/s6-overlay/s6-rc.d/post-tailscaled/dependencies.d/protect-subnets
-fi
-
 # If local subnets are not configured in advertise_routes, do not wait for the local network to be ready to collect subnet information
 if ! bashio::config "advertise_routes" | grep -Fxq "local_subnets"; then
     rm /etc/s6-overlay/s6-rc.d/post-tailscaled/dependencies.d/local-network

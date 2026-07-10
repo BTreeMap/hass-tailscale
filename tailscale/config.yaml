@@ -1,6 +1,6 @@
 ---
 name: Tailscale
-version: 1.0.17
+version: 1.0.18
 slug: tailscale
 description: Zero config VPN for building secure networks
 url: https://github.com/BTreeMap/hass-tailscale
@@ -16,7 +16,6 @@ image: ghcr.io/btreemap/tailscale/{arch}
 init: false
 hassio_api: true
 host_network: true
-host_dbus: true
 privileged:
   - NET_ADMIN
   - NET_RAW
@@ -42,7 +41,7 @@ ports:
   41641/udp: null
 options:
   accept_dns: false
-  accept_routes: true
+  accept_routes: false
   advertise_exit_node: true
   advertise_connector: true
   advertise_routes:

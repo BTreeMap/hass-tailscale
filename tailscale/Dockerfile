@@ -16,8 +16,6 @@ ARG IPCALC_VERSION="1.0.3-r1"
 ARG IPROUTE2_VERSION="7.0.0-r0"
 # renovate: datasource=repology depName=iptables packageName=alpine_3_24/iptables versioning=loose
 ARG IPTABLES_VERSION="1.8.13-r0"
-# renovate: datasource=repology depName=networkmanager packageName=alpine_3_24/networkmanager versioning=loose
-ARG NETWORKMANAGER_VERSION="1.52.2-r0"
 # renovate: datasource=repology depName=nginx packageName=alpine_3_24/nginx versioning=loose
 ARG NGINX_VERSION="1.30.3-r0"
 
@@ -31,12 +29,9 @@ RUN \
         ipcalc="${IPCALC_VERSION}" \
         iproute2="${IPROUTE2_VERSION}" \
         iptables="${IPTABLES_VERSION}" \
-        networkmanager="${NETWORKMANAGER_VERSION}" \
         nginx="${NGINX_VERSION}" \
     && ln -sf /sbin/xtables-nft-multi /sbin/ip6tables \
     && ln -sf /sbin/xtables-nft-multi /sbin/iptables \
-    && rm -rf \
-        /usr/lib/NetworkManager/dispatcher.d \
     && case "${BUILD_ARCH}" in \
              aarch64) ARCH="arm64" ;; \
              amd64)   ARCH="amd64" ;; \

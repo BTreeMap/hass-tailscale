@@ -9,7 +9,6 @@ declare interface
 declare -a options
 declare -a routes=()
 declare route
-declare -a colliding_routes=()
 declare login_server
 declare tags
 declare keyexpiry
@@ -20,12 +19,8 @@ options+=(--hostname "$(bashio::info.hostname)")
 # Keep tailnet DNS settings isolated from Home Assistant and this app.
 options+=(--accept-dns=false)
 
-# Accept routes when explicitly enabled
-if bashio::config.true "accept_routes"; then
-  options+=(--accept-routes)
-else
-  options+=(--accept-routes=false)
-fi
+# Keep routes advertised by the tailnet isolated from Home Assistant and this app.
+options+=(--accept-routes=false)
 
 # Check exit node configuration
 if bashio::config.true "advertise_exit_node" && \
@@ -138,29 +133,6 @@ if keyexpiry=$(/opt/tailscale status --self=true --peers=false --json | jq -rce 
   bashio::log.warning "The connection's key will expire on: ${keyexpiry}"
   bashio::log.warning "Consider disabling key expiry to avoid losing connection to your Home Assistant device."
   bashio::log.warning "Please check your configuration based on the app's documentation under the \"Configuration\" section."
-fi
-
-# Warn about colliding subnet routes if non-userspace networking and accepting routes are enabled
-if bashio::config.false "userspace_networking" && \
-  bashio::config.true "accept_routes";
-then
-  readarray -t colliding_routes < <( \
-    comm -1 -2 \
-      <(subnet-routes local) \
-      <(/opt/tailscale status --json --peers=true --self=false \
-        | jq -rc '.Peer[] | select(has("PrimaryRoutes")) | .PrimaryRoutes[]' \
-        | sort -u))
-  if (( 0 < ${#colliding_routes[@]} )); then
-    bashio::log.warning \
-      "Currently the following subnets are both present as local subnets" \
-      "and are also routed within your tailnet to other nodes!"
-    bashio::log.warning \
-      "Please reconfigure your subnet routing within your tailnet" \
-      "to prevent current or future collisions."
-  fi
-  for route in "${colliding_routes[@]}"; do
-    bashio::log.warning "  ${route}"
-  done
 fi
 
 # Notify about userspace networking

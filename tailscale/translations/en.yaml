@@ -7,11 +7,11 @@ configuration:
       ignored; tailnet DNS settings are always rejected to keep DNS isolated
       from Home Assistant.
   accept_routes:
-    name: Accept routes
+    name: Accept routes (disabled)
     description: >-
-      This option allows you to accept subnet routes advertised by other nodes
-      in your tailnet.
-      This option is enabled by default.
+      Compatibility placeholder for existing configurations. This value is
+      ignored; routes advertised by the tailnet are always rejected to keep
+      Home Assistant from routing outbound traffic through tailnet nodes.
   advertise_exit_node:
     name: Advertise as an exit node
     description: >-

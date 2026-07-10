@@ -32,7 +32,7 @@ def test_runtime_uses_current_bashio_app_api() -> None:
     assert deprecated_references == []
 
 
-def test_runtime_permanently_rejects_tailnet_dns_configuration() -> None:
+def test_runtime_permanently_rejects_tailnet_dns_and_routes() -> None:
     config = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
     dockerfile = DOCKERFILE_PATH.read_text(encoding="utf-8")
     apparmor = APPARMOR_PATH.read_text(encoding="utf-8")
@@ -45,18 +45,27 @@ def test_runtime_permanently_rejects_tailnet_dns_configuration() -> None:
 
     assert config["options"]["accept_dns"] is False
     assert config["schema"]["accept_dns"] == "bool"
+    assert config["options"]["accept_routes"] is False
+    assert config["schema"]["accept_routes"] == "bool"
+    assert "host_dbus" not in config
     assert "SYS_ADMIN" not in config["privileged"]
     assert "--accept-dns=false" in post_tailscaled
+    assert "--accept-routes=false" in post_tailscaled
     assert "accept_dns" not in post_tailscaled
+    assert "accept_routes" not in post_tailscaled
     assert "dnsmasq" not in dockerfile
     assert "bind-tools" not in dockerfile
+    assert "networkmanager" not in dockerfile.lower()
     assert "sys_admin" not in apparmor
     assert all(
         "magicdns" not in path.relative_to(ROOTFS_PATH).as_posix().lower()
+        and "protect-subnet" not in path.relative_to(ROOTFS_PATH).as_posix().lower()
         for path in rootfs_files
     )
     assert all(
-        "magicdns" not in content and "dnsmasq" not in content
+        "magicdns" not in content
+        and "dnsmasq" not in content
+        and "nm-dispatcher" not in content
         for content in rootfs_contents
     )
 

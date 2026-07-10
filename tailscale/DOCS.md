@@ -58,7 +58,7 @@ device. See [Key expiry][tailscale_info_key_expiry] for more information.
 
 ```yaml
 accept_dns: false
-accept_routes: true
+accept_routes: false
 advertise_exit_node: true
 advertise_connector: true
 advertise_routes:
@@ -100,12 +100,10 @@ valid. Its value is ignored: the app always invokes Tailscale with
 
 ### Option: `accept_routes`
 
-This option allows you to accept subnet routes advertised by other nodes in
-your tailnet.
-
-More information: [Subnet routers][tailscale_info_subnets]
-
-When not set, this option is enabled by default.
+This compatibility placeholder is retained so existing configurations remain
+valid. Its value is ignored: the app always invokes Tailscale with
+`--accept-routes=false`. Changing it to `true` does not allow Home Assistant or
+the app to route outbound traffic through subnets advertised by tailnet nodes.
 
 ### Option: `advertise_exit_node`
 
