@@ -17,7 +17,7 @@ ARG IPROUTE2_VERSION="7.0.0-r0"
 # renovate: datasource=repology depName=iptables packageName=alpine_3_24/iptables versioning=loose
 ARG IPTABLES_VERSION="1.8.13-r0"
 # renovate: datasource=repology depName=nginx packageName=alpine_3_24/nginx versioning=loose
-ARG NGINX_VERSION="1.30.3-r0"
+ARG NGINX_VERSION="1.30.4-r1"
 
 # renovate: datasource=github-releases depName=tailscale packageName=tailscale/tailscale versioning=loose extractVersion=^v(?<version>.*)$
 ARG TAILSCALE_VERSION="1.98.8"
