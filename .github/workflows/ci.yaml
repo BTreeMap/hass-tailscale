@@ -45,7 +45,7 @@ jobs:
         with:
           cache-dependency-glob: uv.lock
           enable-cache: true
-          version: "0.12.2"
+          version: "0.12.3"
 
       - name: 🧰 Install locked dependencies
         run: uv sync --locked --no-dev
