@@ -20,7 +20,7 @@ ARG IPTABLES_VERSION="1.8.13-r0"
 ARG NGINX_VERSION="1.30.6-r0"
 
 # renovate: datasource=github-releases depName=tailscale packageName=tailscale/tailscale versioning=loose extractVersion=^v(?<version>.*)$
-ARG TAILSCALE_VERSION="1.104.2"
+ARG TAILSCALE_VERSION="1.104.4"
 
 RUN \
     apk add --no-cache \
