@@ -1,0 +1,9 @@
+// Policy for run-e2e.sh. "https" makes the add-on's HTTPS capability check pass;
+// headscale cannot issue Tailscale certs, so the data path is tested over HTTP.
+// headscale rejects the "funnel" attribute, so Funnel is not covered.
+{
+  "acls": [{"action": "accept", "src": ["*"], "dst": ["*:*"]}],
+  "grants": [{"src": ["*"], "dst": ["*"], "app": {"tailscale.com/cap/drive": [{"shares": ["*"], "access": "rw"}]}}],
+  "nodeAttrs": [{"target": ["*"], "attr": ["drive:share", "drive:access", "https"]}],
+  "autoApprovers": {"routes": {"@SUBNET@/24": ["test@"]}, "exitNode": ["test@"]}
+}
