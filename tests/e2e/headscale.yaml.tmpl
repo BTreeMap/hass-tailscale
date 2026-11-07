@@ -1,0 +1,42 @@
+# Local control server for run-e2e.sh. @WORK@ and @GW@ are filled in by the script.
+server_url: http://@GW@:8080
+listen_addr: 0.0.0.0:8080
+metrics_listen_addr: 127.0.0.1:19090
+grpc_listen_addr: 127.0.0.1:50443
+noise:
+  private_key_path: @WORK@/hs/noise_private.key
+prefixes:
+  v4: 100.64.0.0/10
+  v6: fd7a:115c:a1e0::/48
+  allocation: sequential
+derp:
+  server:
+    enabled: true
+    region_id: 999
+    region_code: e2e
+    region_name: e2e
+    stun_listen_addr: 0.0.0.0:3478
+    private_key_path: @WORK@/hs/derp_server_private.key
+    automatically_add_embedded_derp_region: true
+    ipv4: @GW@
+  urls: []
+  paths: []
+  auto_update_enabled: false
+disable_check_updates: true
+database:
+  type: sqlite
+  sqlite:
+    path: @WORK@/hs/db.sqlite
+dns:
+  magic_dns: true
+  base_domain: ts.test
+  override_local_dns: false
+  nameservers:
+    global: []
+unix_socket: @WORK@/hs/headscale.sock
+unix_socket_permission: "0770"
+log:
+  level: info
+policy:
+  mode: file
+  path: @WORK@/hs/acl.hujson
